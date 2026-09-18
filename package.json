@@ -1,5 +1,5 @@
 {
-  "name": "my-app",
+  "name": "muhasebe",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -9,6 +9,7 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "mariadb": "^3.5.4",
     "next": "16.3.4",
     "react": "19.2.8",
     "react-dom": "19.2.8"
