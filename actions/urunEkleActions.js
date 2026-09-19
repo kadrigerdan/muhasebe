@@ -1,4 +1,4 @@
-"use server"
+"use server";
 import { query } from "@/lib/db";
 import { revalidatePath } from "next/cache";
 
@@ -9,29 +9,36 @@ export async function urunEkleActions(prevState, formData) {
 		const satisFiyati = parseFloat(formData.get("varsayilan_satis_fiyati")) || 0;
 
 		if (!urunAdi) {
-			return { success: false, message: "Ürün adı zorunludur." }
+			return { success: false, message: "Ürün adı zorunludur." };
 		}
 
-		// 1.Ürünü veritabanına ekleyin.
+		// 1. Ürünü veritabanına ekle (kolon adları tablodaki ile aynı olmalı)
 		const result = await query(
-			`INSERT INTO urunler (urunAdi,alisFiyati,satisFiyati) VALUES (?,?,?)`,
+			`INSERT INTO urunler (urun_adi, varsayilan_alis_fiyati, varsayilan_satis_fiyati) VALUES (?, ?, ?)`,
 			[urunAdi, alisFiyati, satisFiyati]
 		);
 
-		// Eklenen yeni ürünün ID sini alıp nesne oluştur
+		// 2. Eklenen yeni ürünün ID'sini al ve nesne oluştur
 		const yeniUrun = {
-			id: result.InsertId, urunAdi, alisFiyati, satisFiyati,
-			fiyat: satisFiyati
+			id: result.insertId,                 // ⬅️ küçük harf!
+			urun_adi: urunAdi,                    // ⬅️ projedeki diğer yerlerle tutarlı olsun
+			varsayilan_alis_fiyati: alisFiyati,
+			varsayilan_satis_fiyati: satisFiyati,
 		};
 
 		revalidatePath("/stok");
 		revalidatePath("/fatura-kes");
 
 		return {
-			success: true, message: "Ürün başarıyla eklendi.", data: yeniUrun
+			success: true,
+			message: "Ürün başarıyla eklendi.",
+			data: yeniUrun,
 		};
 	} catch (error) {
-		console.error("Ürün ekleme hatası:", error)
-		return { success: false, message: "Ürün eklenirken bir hata oluştu." + error.message };
+		console.error("Ürün ekleme hatası:", error);
+		return {
+			success: false,
+			message: "Ürün eklenirken bir hata oluştu: " + error.message,
+		};
 	}
 }

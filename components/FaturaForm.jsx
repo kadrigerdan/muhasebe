@@ -19,7 +19,13 @@ export function FaturaForm({ urunler, musteriler }) {
       .toISOString()
       .split("T")[0]
   );
+
   const [onayModalAcik, setOnayModalAcik] = useState(false);
+  const [urunModalAcik, setUrunModalAcik] = useState(false);
+  const [hedefSatirId, setHedefSatirId] = useState(null);
+
+
+
 
   // Yeni ürün satırı ekle
   const urunEkle = () => {
@@ -44,6 +50,14 @@ export function FaturaForm({ urunler, musteriler }) {
 
   // Ürün seçildiğinde fiyatı otomatik doldur
   const urunSecildi = (id, urunId) => {
+    // "Yeni Ürün" seçildiyse modalı aç, fiyat güncelleme yapma
+    if (urunId === "__yeni_urun__") {
+      setHedefSatirId(id);
+      setUrunModalAcik(true);
+      return;
+    }
+
+    // Normal ürün seçimi — eski kod aynen devam ediyor
     const secilen = urunler?.find((u) => u.id == Number(urunId));
     setUrunListesi(
       urunListesi.map((u) =>
@@ -169,10 +183,11 @@ export function FaturaForm({ urunler, musteriler }) {
                 <option value="">Ürün seç...</option>
                 {urunler?.map((u) => (
                   <option key={u.id} value={u.id}>
-                    {u.id}-{u.urun_adi} — {u.varsayilan_alis_fiyati} —{" "}
+                    {u.id}-{u.urun_adi} — {u.varsayilan_alis_fiyati}
                     {u.varsayilan_satis_fiyati}
                   </option>
                 ))}
+                <option value="__yeni_urun__" className="font-medium text-blue-600"> Yeni Ürün</option>
               </select>
 
               <input
@@ -244,9 +259,9 @@ export function FaturaForm({ urunler, musteriler }) {
             <button
               type="submit"
               disabled={isPending || urunListesi.length === 0}
-              className="col-span-2 w-full bg-green-500 text-white px-4 py-3 rounded hover:bg-green-600 disabled:opacity-50 font-medium transition"
+              className="col-span-3 w-full bg-green-900 text-white px-4 py-3 rounded hover:bg-green-950 font-medium transition"
             >
-              {isPending ? "Fatura Kesiliyor..." : "Fatura Kes"}
+              {isPending ? "iliyor..." : "Fatura Kes"}
             </button>
           </div>
         </div>
@@ -254,9 +269,42 @@ export function FaturaForm({ urunler, musteriler }) {
 
 
 
-      <div className="">
-        <UrunEkleModal yeniUrunEklendi={() => router.refresh()} />
-      </div>
+      <UrunEkleModal
+        isOpen={urunModalAcik}
+        onClose={() => {
+          setUrunModalAcik(false);
+          setHedefSatirId(null);
+          // "Yeni Ürün" seçili kaldıysa select'i temizle
+          if (hedefSatirId != null) {
+            setUrunListesi((prev) =>
+              prev.map((u) =>
+                u.id === hedefSatirId && u.urun_id === "__yeni_urun__"
+                  ? { ...u, urun_id: "" }
+                  : u
+              )
+            );
+          }
+        }}
+        yeniUrunEklendi={(yeniUrun) => {
+          if (hedefSatirId != null && yeniUrun) {
+            setUrunListesi((prev) =>
+              prev.map((u) =>
+                u.id === hedefSatirId
+                  ? {
+                    ...u,
+                    urun_id: yeniUrun.id,
+                    birimFiyat:
+                      Number(yeniUrun.varsayilan_satis_fiyati) || u.birimFiyat,
+                  }
+                  : u
+              )
+            );
+          }
+          setHedefSatirId(null);
+          setUrunModalAcik(false);
+          router.refresh();
+        }}
+      />
 
 
       {/* ONAY MODALI */}
