@@ -1,5 +1,5 @@
 "use client";
-import { useRef, useState, useActionState, useEffect } from "react";
+import { useRef, useState, useActionState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { faturaKes } from "../actions/faturaActions";
 import { UrunEkleModal } from "../modals/urunEkleModal";
@@ -30,9 +30,12 @@ export function FaturaForm({ urunler, musteriler }) {
   // Yeni ürün satırı ekle
   const urunEkle = () => {
     const yeniId = sayacRef.current++;
-    setUrunListesi([
-      ...urunListesi,
-      { id: yeniId, urun_id: "", adet: 1, birimFiyat: 0 },
+    setUrunListesi((prev) => [
+      ...prev,
+      {
+        id: yeniId, urun_id: "", adet: 1, varsayilan_alis_fiyati: 0,
+        varsayilan_satis_fiyati: 0, birimFiyat: 0
+      },
     ]);
   };
 
@@ -52,22 +55,24 @@ export function FaturaForm({ urunler, musteriler }) {
   const urunSecildi = (id, urunId) => {
     // "Yeni Ürün" seçildiyse modalı aç, fiyat güncelleme yapma
     if (urunId === "__yeni_urun__") {
+      setUrunListesi((prev) =>
+        prev.map((u) => u.id === id ? { ...u, urun_id: "__yeni_urun__" } : u))
       setHedefSatirId(id);
       setUrunModalAcik(true);
       return;
     }
 
-    // Normal ürün seçimi — eski kod aynen devam ediyor
+    // Normal ürün seçimi 
     const secilen = urunler?.find((u) => u.id == Number(urunId));
-    setUrunListesi(
-      urunListesi.map((u) =>
+    setUrunListesi((prev) =>
+      prev.map((u) =>
         u.id === id
           ? {
             ...u,
             urun_id: Number(urunId) || null,
-            birimFiyat: Number(secilen?.varsayilan_satis_fiyati)
-              ? Number(secilen.varsayilan_satis_fiyati)
-              : u.birimFiyat,
+            varsayilan_alis_fiyati: Number(secilen?.varsayilan_alis_fiyati) || 0,
+            varsayilan_satis_fiyati: Number(secilen?.varsayilan_satis_fiyati) || 0,
+            birimFiyat: Number(secilen?.varsayilan_satis_fiyati) || u.birimFiyat,
           }
           : u
       )
@@ -110,6 +115,14 @@ export function FaturaForm({ urunler, musteriler }) {
       );
     }
   }, [state]);
+
+  const siraliUrunler = useMemo(() => {
+    return [...(urunler ?? [])].sort((a, b) =>
+      (a.urun_adi ?? "").localeCompare(b.urun_adi ?? "", "tr", {
+        sensitivity: "base",
+      })
+    );
+  }, [urunler]);
 
   return (
     <>
@@ -183,26 +196,11 @@ export function FaturaForm({ urunler, musteriler }) {
                 <option value="">Ürün seç...</option>
                 {urunler?.map((u) => (
                   <option key={u.id} value={u.id}>
-                    {u.id}-{u.urun_adi} — {u.varsayilan_alis_fiyati}
-                    {u.varsayilan_satis_fiyati}
+                    {u.id} - {u.urun_adi} — {u.varsayilan_alis_fiyati} &mdash; {u.varsayilan_satis_fiyati}
                   </option>
                 ))}
                 <option value="__yeni_urun__" className="font-medium text-blue-600"> Yeni Ürün</option>
               </select>
-
-              <input
-                type="number"
-                value={item.varsayilan_satis_fiyati ?? 0}
-                onChange={(e) =>
-                  urunGuncelle(
-                    item.id,
-                    "varsayilan_satis_fiyati",
-                    Number(e.target.value)
-                  )
-                }
-                placeholder="Satış Fiyatı"
-                className="border rounded px-2 py-1"
-              />
 
               <input
                 type="number"
@@ -211,6 +209,21 @@ export function FaturaForm({ urunler, musteriler }) {
                   urunGuncelle(item.id, "adet", Number(e.target.value))
                 }
                 placeholder="Adet"
+                className="border rounded px-2 py-1"
+              />
+
+              <input
+                type="number"
+                step="1.00"
+                value={item.varsayilan_alis_fiyati ?? 0}
+                onChange={(e) =>
+                  urunGuncelle(
+                    item.id,
+                    "varsayilan_alis_fiyati",
+                    Number(e.target.value)
+                  )
+                }
+                placeholder="Satış Fiyatı"
                 className="border rounded px-2 py-1"
               />
 
@@ -293,6 +306,8 @@ export function FaturaForm({ urunler, musteriler }) {
                   ? {
                     ...u,
                     urun_id: yeniUrun.id,
+                    varsayilan_alis_fiyati: Number(yeniUrun.varsayilan_alis_fiyati) || 0,
+                    varsayilan_satis_fiyati: Number(yeniUrun.varsayilan_satis_fiyati) || 0,
                     birimFiyat:
                       Number(yeniUrun.varsayilan_satis_fiyati) || u.birimFiyat,
                   }

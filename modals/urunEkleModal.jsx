@@ -90,5 +90,4 @@ export function UrunEkleModal({ isOpen, onClose, yeniUrunEklendi }) {
     </div>
   );
 
-  return createPortal(modalContent, document.body);
 }
