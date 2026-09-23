@@ -4,45 +4,32 @@ import { satisFaturasiKes } from "@/models/urunModel";
 
 export async function faturaKes(prevState, formData) {
     try {
-        // 1. FormData oku
         const musteriIdRaw = formData.get("musteri_id");
         const tarih = formData.get("tarih");
         const urunlerStr = formData.get("urunler");
 
-        // 2. Debug (iş bitince sil)
-        console.log("=== ACTION DEBUG ===");
-        console.log("musteri:", musteriIdRaw);
-        console.log("tarih:", tarih);
-        console.log("urunler:", urunlerStr);
-
-        // 3. Validasyon (INSERT'ten ÖNCE)
         const musteriId = Number(musteriIdRaw);
+
         if (!musteriId || !Number.isFinite(musteriId)) {
             return { success: false, error: "Lütfen müşteri seçin" };
         }
-        if (!tarih) {
-            return { success: false, error: "Tarih seçiniz" };
-        }
+
+        if (!tarih) { return { success: false, error: "Tarih seçiniz" }; }
 
         let urunler = [];
-        try {
-            urunler = JSON.parse(urunlerStr || "[]");
-        } catch {
-            return { success: false, error: "Ürün listesi okunamadı" };
-        }
 
-        // Boş urun_id'leri filtrele
+        try { urunler = JSON.parse(urunlerStr || "[]"); }
+
+        catch { return { success: false, error: "Ürün listesi okunamadı" }; }
+
         urunler = urunler.filter(u => u.urun_id && Number(u.urun_id) > 0);
+
         if (urunler.length === 0) {
             return { success: false, error: "En az bir ürün ekleyin" };
         }
 
         // 4. Model'i TEK SEFER çağır
-        const fatura = await satisFaturasiKes({
-            musteri_id: musteriId,
-            tarih,
-            urunler,
-        });
+        const fatura = await satisFaturasiKes({ musteri_id: musteriId, tarih, urunler, });
 
         revalidatePath("/faturalar");
         revalidatePath("/stok");

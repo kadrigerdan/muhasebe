@@ -9,10 +9,7 @@ export default async function FaturaKesPage() {
     const musteriler = await getMusteriler();
     return (
         <div className="">
-            <nav className="flex mt-4 px-3 justify-center">
-                <Link href="/" className="py-2.5 px-4 hover:bg-slate-300 transition">🏠 Ana Sayfa</Link>
-                <Link href="/fatura-kes" className="py-2.5 px-4 hover:bg-slate-300 transition">📄 Fatura Kes</Link>
-            </nav>
+
             <h1 className="hover:bg-slate-300 transition">Fatura Kes</h1>
 
             {/* Formu ve ürün ekleme modalını göster */}

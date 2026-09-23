@@ -31,8 +31,7 @@ export function FaturaForm({ urunler, musteriler }) {
   const urunEkle = () => {
     const yeniId = sayacRef.current++;
     setUrunListesi((prev) => [
-      ...prev,
-      {
+      ...prev, {
         id: yeniId, urun_id: "", adet: 1, varsayilan_alis_fiyati: 0,
         varsayilan_satis_fiyati: 0, birimFiyat: 0
       },
