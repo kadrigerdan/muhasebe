@@ -6,7 +6,6 @@ export default function Home() {
     <div>
 
 
-      <h1 className="">Ana Sayfa</h1>
 
     </div>
   );

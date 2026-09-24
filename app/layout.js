@@ -2,6 +2,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { FaturaForm } from "@/components/FaturaForm";
 import Link from "next/link";
+import { Nav } from "@/components/Nav";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -26,14 +27,8 @@ export default function RootLayout({ children }) {
     >
       <body className="min-h-full flex flex-col">
 
-        <nav className="flex mt-2 px-3 justify-center sticky top-0">
-          <Link href="/" className="py-2.5 px-4 hover:bg-slate-300 transition">🏠 Ana Sayfa</Link>
-          <Link href="/fatura-kes" className="py-2.5 px-4 hover:bg-slate-300 transition">📄 Fatura Kes</Link>
-          <Link href="/stok" className="py-2.5 px-4 hover:bg-slate-300 transition">📄 Stok</Link>
-        </nav>
-        <main className="flex-1">
-          {children}
-        </main>
+        <Nav />
+        <main className="flex-1"> {children} </main>
 
       </body>
     </html>
