@@ -68,7 +68,7 @@ export async function stokHareketEkleAction(prevState, formData) {
         return { success: true, message: "Kaydedildi." };
 
     } catch {
-        await conn.rollback();
+        await conn.rollback(e);
         console.error("stokHareketEkleAction:", e);
         return { success: false, message: e.message };
     } finally {
