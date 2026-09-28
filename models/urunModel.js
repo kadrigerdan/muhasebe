@@ -1,4 +1,4 @@
-import { query } from "@/lib/db";
+import { query } from "@/database/db";
 import { revalidatePath } from "next/cache";
 
 // Aktif ürün listesi (dropdown'lar için)

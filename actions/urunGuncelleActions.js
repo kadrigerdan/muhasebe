@@ -1,6 +1,6 @@
 "use server"
 
-import { query } from "@/lib/db";
+import { query } from "@/database/db";
 import { revalidatePath } from "next/cache";
 
 export async function urunGuncelleAction(prevState, formData) {

@@ -1,5 +1,5 @@
 "use server"
-import { getConnection, query } from "@/lib/db";
+import { getConnection, query } from "@/database/db";
 
 
 // Aktif ürünleri + stok durumunu getir

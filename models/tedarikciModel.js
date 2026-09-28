@@ -1,4 +1,4 @@
-import { query } from '@/lib/db';
+import { query } from '@/database/db';
 
 export async function tumTedarikciler() {
     return await query(
