@@ -6,10 +6,10 @@ export function Nav() {
   const path = usePathname();
   const linkler = [
     { href: "/", label: "🏠 Ana Sayfa" },
-    { href: "/tedarikciler", label: "📄 Tedarikciler" },
+    { href: "/cariler", label: "📦 Cariler" },
     { href: "/stok", label: "📦 Stok" },
-    { href: "/fatura-kes", label: "📄 Fatura Kes" },
-
+    { href: "/alis-faturalar", label: "📄 Alış Faturalar" },
+    { href: "/satis-faturalar", label: "📄 Satış Faturalar" },
   ];
 
   return (

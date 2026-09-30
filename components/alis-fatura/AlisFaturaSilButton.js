@@ -1,16 +1,16 @@
 'use client';
 
 import { useState, useTransition } from 'react';
-import { tedarikciSilAction } from '@/actions/tedarikciActions';
+import { alisFaturaSilAction } from '@/actions/alisFaturaActions';
 
-export default function TedarikciDeleteButton({ id }) {
+export default function AlisFaturaSilButton({ id }) {
     const [pending, startTransition] = useTransition();
     const [error, setError] = useState(null);
 
     function handleDelete() {
-        if (!confirm('Bu tedarikçiyi silmek istediğine emin misin?')) return;
+        if (!confirm('Fatura silinsin mi? Stok geri düşülecek.')) return;
         startTransition(async () => {
-            const res = await tedarikciSil(id);
+            const res = await alisFaturaSilAction(id);
             if (res?.error) setError(res.error);
         });
     }

@@ -27,7 +27,7 @@ export function FaturaForm({ urunler, musteriler }) {
 
 
 
-  // Yeni ürün satırı ekle
+  // Yeni ürün ı ekle
   const urunEkle = () => {
     const yeniId = sayacRef.current++;
     setUrunListesi((prev) => [
@@ -38,12 +38,12 @@ export function FaturaForm({ urunler, musteriler }) {
     ]);
   };
 
-  // Ürün satırı sil
+  // Ürün ı sil
   const urunSil = (id) => {
     setUrunListesi(urunListesi.filter((u) => u.id !== id));
   };
 
-  // Ürün satırı güncelle
+  // Ürün ı güncelle
   const urunGuncelle = (id, field, value) => {
     setUrunListesi(
       urunListesi.map((u) => (u.id === id ? { ...u, [field]: value } : u))

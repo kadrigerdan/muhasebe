@@ -1,5 +1,6 @@
 "use server"
 import { getConnection, query } from "@/database/db";
+import { revalidatePath } from "next/cache";
 
 
 // Aktif ürünleri + stok durumunu getir
@@ -24,7 +25,7 @@ export async function getStokHareketleriAction(urunId) {
             `SELECT id,tip,miktar,aciklama,kaynak,kaynak_id,tarih
             FROM stok_hareketleri 
             WHERE urun_id = ?
-            ORDER BY tarih DESC id DESC
+            ORDER BY tarih DESC, id DESC
             LIMIT 200`, [urunId]
         );
         return { success: true, data: hareketler };
@@ -67,8 +68,8 @@ export async function stokHareketEkleAction(prevState, formData) {
         revalidatePath("/stok");
         return { success: true, message: "Kaydedildi." };
 
-    } catch {
-        await conn.rollback(e);
+    } catch (e) {
+        await conn.rollback();
         console.error("stokHareketEkleAction:", e);
         return { success: false, message: e.message };
     } finally {
