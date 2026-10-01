@@ -1,6 +1,8 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { kasaGetir, kasaHareketleri } from '@/models/kasaModel';
+import HareketForm from '@/components/kasa/HareketForm';
+import HareketSilButton from '@/components/kasa/HareketSilButton';
 
 export const dynamic = 'force-dynamic';
 
@@ -24,10 +26,25 @@ export default async function KasaDetayPage({ params }) {
   return (
     <div className="p-6 max-w-5xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">{kasa.ad}</h1>
-        <Link href="/kasa" className="text-blue-600 hover:underline">
-          ← Kasa
-        </Link>
+        <div>
+          <h1 className="text-2xl font-bold">{kasa.ad}</h1>
+          <div className="text-sm text-gray-500">
+            {kasa.tip === 'nakit' && 'Nakit Kasa'}
+            {kasa.tip === 'banka' && `Banka${kasa.banka_adi ? ' — ' + kasa.banka_adi : ''}`}
+            {kasa.tip === 'pos' && 'POS'}
+          </div>
+        </div>
+        <div className="flex gap-2">
+          <Link
+            href={`/kasa/hesaplar/${kasa.id}`}
+            className="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700 text-sm"
+          >
+            Düzenle
+          </Link>
+          <Link href="/kasa" className="text-blue-600 hover:underline self-center">
+            ← Kasa
+          </Link>
+        </div>
       </div>
 
       <div className="grid grid-cols-3 gap-3">
@@ -51,15 +68,7 @@ export default async function KasaDetayPage({ params }) {
         </div>
       </div>
 
-      <div className="border rounded p-4 bg-gray-50">
-        <h2 className="font-bold mb-3">Hareket Ekle</h2>
-        <form action="/kasa/hareketler/ekle" method="POST" className="hidden">
-          {/* ileride action ile bağlanacak */}
-        </form>
-        <p className="text-sm text-gray-500">
-          Hareket ekleme özelliği bir sonraki adımda eklenecek.
-        </p>
-      </div>
+      <HareketForm kasaId={id} />
 
       <table className="w-full border-collapse border text-sm">
         <thead className="bg-gray-100">
@@ -69,12 +78,13 @@ export default async function KasaDetayPage({ params }) {
             <th className="border p-2 text-right">Tutar</th>
             <th className="border p-2 text-left">Kaynak</th>
             <th className="border p-2 text-left">Açıklama</th>
+            <th className="border p-2 text-center">İşlem</th>
           </tr>
         </thead>
         <tbody>
           {hareketler.length === 0 && (
             <tr>
-              <td colSpan={5} className="border p-4 text-center text-gray-500">
+              <td colSpan={6} className="border p-4 text-center text-gray-500">
                 Hareket yok.
               </td>
             </tr>
@@ -85,12 +95,20 @@ export default async function KasaDetayPage({ params }) {
                 {new Date(h.tarih).toLocaleDateString('tr-TR')}
               </td>
               <td className="border p-2 text-center">
-                {h.tip === 'giris'
-                  ? <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded">Giriş</span>
-                  : <span className="text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded">Çıkış</span>}
+                {h.tip === 'giris' ? (
+                  <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded">
+                    Giriş
+                  </span>
+                ) : (
+                  <span className="text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded">
+                    Çıkış
+                  </span>
+                )}
               </td>
-              <td className={`border p-2 text-right font-medium ${h.tip === 'giris' ? 'text-green-700' : 'text-red-700'
-                }`}>
+              <td
+                className={`border p-2 text-right font-medium ${h.tip === 'giris' ? 'text-green-700' : 'text-red-700'
+                  }`}
+              >
                 {h.tip === 'giris' ? '+' : '-'}
                 {Number(h.tutar).toFixed(2)} ₺
               </td>
@@ -99,6 +117,9 @@ export default async function KasaDetayPage({ params }) {
                 {h.kaynak_id ? ` #${h.kaynak_id}` : ''}
               </td>
               <td className="border p-2">{h.aciklama ?? '-'}</td>
+              <td className="border p-2 text-center">
+                <HareketSilButton id={Number(h.id)} />
+              </td>
             </tr>
           ))}
         </tbody>

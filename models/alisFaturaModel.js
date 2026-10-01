@@ -2,13 +2,14 @@ import { query, getConnection } from '@/database/db';
 
 export async function tumAlisFaturalar() {
     return await query(
-        `SELECT f.id, f.tarih, c.unvan AS cari_unvan,
+        `SELECT f.id, f.tarih, f.odenen_tutar, f.durum,
+            c.unvan AS cari_unvan,
             COUNT(d.id) AS kalem_sayisi,
             COALESCE(SUM(d.miktar * d.birim_fiyat), 0) AS toplam
        FROM alis_faturalar f
        JOIN cariler c ON c.id = f.cari_id
        LEFT JOIN alis_fatura_detaylari d ON d.fatura_id = f.id
-      GROUP BY f.id, f.tarih, c.unvan
+      GROUP BY f.id, f.tarih, f.odenen_tutar, f.durum, c.unvan
       ORDER BY f.tarih DESC, f.id DESC`
     );
 }
@@ -128,4 +129,70 @@ export async function alisMaliOzet() {
      LEFT JOIN alis_fatura_detaylari d ON d.fatura_id = f.id`
     );
     return rows[0];
+}
+
+// -------- ÖDEME --------
+// Faturaya ödeme ekle + durum güncelle + (opsiyonel) kasa hareketi
+export async function alisFaturaOdemeEkle(faturaId, veri) {
+    const conn = await getConnection();
+    try {
+        await conn.beginTransaction();
+
+        // 1) Fatura toplamını al
+        const [fatura] = await conn.query(
+            `SELECT f.id, f.odenen_tutar,
+              COALESCE(SUM(d.miktar * d.birim_fiyat), 0) AS toplam
+         FROM alis_faturalar f
+         LEFT JOIN alis_fatura_detaylari d ON d.fatura_id = f.id
+        WHERE f.id = ?
+        GROUP BY f.id, f.odenen_tutar
+        FOR UPDATE`,
+            [faturaId]
+        );
+        if (!fatura) throw new Error('Fatura bulunamadı.');
+
+        const toplam = Number(fatura.toplam);
+        const eskiOdenen = Number(fatura.odenen_tutar);
+        const yeniOdenen = eskiOdenen + Number(veri.tutar);
+
+        if (yeniOdenen > toplam + 0.01) {
+            throw new Error(`Ödeme tutarı fatura toplamını aşamaz. Kalan: ${(toplam - eskiOdenen).toFixed(2)} ₺`);
+        }
+
+        // 2) Durum hesapla
+        let durum = 'odenmedi';
+        if (yeniOdenen >= toplam - 0.01) durum = 'odendi';
+        else if (yeniOdenen > 0) durum = 'kismi';
+
+        // 3) Faturayı güncelle
+        await conn.query(
+            `UPDATE alis_faturalar
+          SET odenen_tutar = ?, durum = ?
+        WHERE id = ?`,
+            [yeniOdenen, durum, faturaId]
+        );
+
+        // 4) Kasadan düş (opsiyonel)
+        let kasaHareketId = null;
+        if (veri.kasadan_dus && veri.kasa_id) {
+            const { hareketEkle } = await import('./kasaModel');
+            kasaHareketId = await hareketEkle(conn, {
+                kasa_id: veri.kasa_id,
+                tip: 'cikis',
+                tutar: Number(veri.tutar),
+                tarih: veri.tarih,
+                aciklama: `Alış faturası ödemesi #${faturaId}`,
+                kaynak_tipi: 'fatura_odeme',
+                kaynak_id: faturaId,
+            });
+        }
+
+        await conn.commit();
+        return { ok: true, kasaHareketId, yeniOdenen, durum };
+    } catch (err) {
+        await conn.rollback();
+        throw err;
+    } finally {
+        conn.release();
+    }
 }

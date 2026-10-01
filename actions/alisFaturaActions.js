@@ -56,3 +56,32 @@ export async function alisFaturaSilAction(id) {
         return { error: 'Fatura silinemedi.' };
     }
 }
+
+export async function alisFaturaOdemeAction(prevState, formData) {
+    const fatura_id = Number(formData.get('fatura_id'));
+    const tutar = Number(formData.get('tutar'));
+    const tarih = formData.get('tarih');
+    const kasadan_dus = formData.get('kasadan_dus') === 'on';
+    const kasa_id = kasadan_dus ? Number(formData.get('kasa_id')) : null;
+
+    if (!fatura_id) return { error: 'Fatura seçilmelidir.' };
+    if (!tutar || tutar <= 0) return { error: 'Tutar 0 olamaz.' };
+    if (!tarih) return { error: 'Tarih zorunludur.' };
+    if (kasadan_dus && !kasa_id) return { error: 'Kasa seçilmelidir.' };
+
+    try {
+        const { alisFaturaOdemeEkle } = await import('@/models/alisFaturaModel');
+        await alisFaturaOdemeEkle(fatura_id, {
+            tutar, tarih, kasadan_dus, kasa_id,
+        });
+        revalidatePath('/alis-faturalar');
+        revalidatePath(`/alis-faturalar/${fatura_id}`);
+        revalidatePath('/kasa');
+        revalidatePath('/kasa/hareketler');
+        revalidatePath('/cariler');
+    } catch (err) {
+        console.error('alisFaturaOdeme:', err);
+        return { error: err.message || 'Ödeme kaydedilemedi.' };
+    }
+    return { ok: true };
+}

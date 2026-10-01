@@ -34,7 +34,7 @@ CREATE TABLE `alis_fatura_detaylari` (
   KEY `idx_alis_detay_urun` (`urun_id`),
   CONSTRAINT `fk_alis_detay_fatura` FOREIGN KEY (`fatura_id`) REFERENCES `alis_faturalar` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `fk_alis_detay_urun` FOREIGN KEY (`urun_id`) REFERENCES `urunler` (`id`) ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -46,23 +46,48 @@ DROP TABLE IF EXISTS `alis_faturalar`;
 /*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `alis_faturalar` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
-  `tedarikci_id` int(11) NOT NULL,
+  `cari_id` int(11) NOT NULL,
   `tarih` date NOT NULL,
   `created_at` timestamp NULL DEFAULT current_timestamp(),
   PRIMARY KEY (`id`),
-  KEY `idx_alis_tedarikci` (`tedarikci_id`),
-  CONSTRAINT `fk_alis_faturalar_tedarikci` FOREIGN KEY (`tedarikci_id`) REFERENCES `tedarikciler` (`id`) ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  KEY `fk_alis_cari` (`cari_id`),
+  CONSTRAINT `fk_alis_cari` FOREIGN KEY (`cari_id`) REFERENCES `cariler` (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Table structure for table `musteriler`
+-- Table structure for table `cariler`
 --
 
-DROP TABLE IF EXISTS `musteriler`;
+DROP TABLE IF EXISTS `cariler`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
-CREATE TABLE `musteriler` (
+CREATE TABLE `cariler` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `unvan` varchar(255) DEFAULT NULL,
+  `tip` enum('tedarikci','musteri','her_ikisi') NOT NULL DEFAULT 'her_ikisi',
+  `telefon` varchar(20) DEFAULT NULL,
+  `adres` text DEFAULT NULL,
+  `vergi_no` varchar(20) DEFAULT NULL,
+  `vergi_dairesi` varchar(100) DEFAULT NULL,
+  `yetkili` varchar(100) DEFAULT NULL,
+  `email` varchar(150) DEFAULT NULL,
+  `aktif` tinyint(1) NOT NULL DEFAULT 1,
+  `created_at` timestamp NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uniq_unvan` (`unvan`),
+  KEY `idx_tip` (`tip`)
+) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `musteriler_old`
+--
+
+DROP TABLE IF EXISTS `musteriler_old`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8mb4 */;
+CREATE TABLE `musteriler_old` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `unvan` varchar(255) NOT NULL,
   `telefon` varchar(20) DEFAULT NULL,
@@ -70,6 +95,69 @@ CREATE TABLE `musteriler` (
   `created_at` timestamp NULL DEFAULT current_timestamp(),
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=10 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `personel`
+--
+
+DROP TABLE IF EXISTS `personel`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8mb4 */;
+CREATE TABLE `personel` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `ad` varchar(100) NOT NULL,
+  `soyad` varchar(100) NOT NULL,
+  `tc_kimlik` varchar(11) DEFAULT NULL,
+  `sgk_no` varchar(20) DEFAULT NULL,
+  `telefon` varchar(20) DEFAULT NULL,
+  `email` varchar(150) DEFAULT NULL,
+  `adres` text DEFAULT NULL,
+  `dogum_tarihi` date DEFAULT NULL,
+  `egitim_durumu` enum('ilkokul','ortaokul','lise','onlisans','lisans','yuksek_lisans','doktora') DEFAULT NULL,
+  `ehliyet_sinifi` varchar(10) DEFAULT NULL,
+  `ehliyet_tarihi` date DEFAULT NULL,
+  `ise_giris_tarihi` date NOT NULL,
+  `isten_cikis_tarihi` date DEFAULT NULL,
+  `gorev` varchar(100) DEFAULT NULL,
+  `departman` varchar(100) DEFAULT NULL,
+  `maas` decimal(12,2) NOT NULL DEFAULT 0.00,
+  `banka_adi` varchar(100) DEFAULT NULL,
+  `iban` varchar(34) DEFAULT NULL,
+  `aktif` tinyint(1) NOT NULL DEFAULT 1,
+  `notlar` text DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uniq_tc` (`tc_kimlik`),
+  KEY `idx_aktif` (`aktif`),
+  KEY `idx_departman` (`departman`)
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `personel_odeme`
+--
+
+DROP TABLE IF EXISTS `personel_odeme`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8mb4 */;
+CREATE TABLE `personel_odeme` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `personel_id` int(11) NOT NULL,
+  `odeme_tipi` enum('maas','avans','prim','ikramiye','kesinti','diger') NOT NULL DEFAULT 'maas',
+  `tutar` decimal(12,2) NOT NULL,
+  `tarih` date NOT NULL,
+  `donem` varchar(7) DEFAULT NULL,
+  `aciklama` varchar(255) DEFAULT NULL,
+  `kasadan_dus` tinyint(1) NOT NULL DEFAULT 0,
+  `kasa_hareket_id` int(11) DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`),
+  KEY `idx_personel` (`personel_id`),
+  KEY `idx_tarih` (`tarih`),
+  KEY `idx_donem` (`donem`),
+  CONSTRAINT `fk_odeme_personel` FOREIGN KEY (`personel_id`) REFERENCES `personel` (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -90,7 +178,7 @@ CREATE TABLE `satis_fatura_detaylari` (
   KEY `idx_satis_detay_urun` (`urun_id`),
   CONSTRAINT `fk_satis_detay_fatura` FOREIGN KEY (`fatura_id`) REFERENCES `satis_faturalar` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `fk_satis_detay_urun` FOREIGN KEY (`urun_id`) REFERENCES `urunler` (`id`) ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=25 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=28 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -102,13 +190,13 @@ DROP TABLE IF EXISTS `satis_faturalar`;
 /*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `satis_faturalar` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
-  `musteri_id` int(11) NOT NULL,
+  `cari_id` int(11) NOT NULL,
   `tarih` date NOT NULL,
   `created_at` timestamp NULL DEFAULT current_timestamp(),
   PRIMARY KEY (`id`),
-  KEY `idx_satis_musteri` (`musteri_id`),
-  CONSTRAINT `fk_satis_faturalar_musteri` FOREIGN KEY (`musteri_id`) REFERENCES `musteriler` (`id`) ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=56 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  KEY `fk_satis_cari` (`cari_id`),
+  CONSTRAINT `fk_satis_cari` FOREIGN KEY (`cari_id`) REFERENCES `cariler` (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=58 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -132,17 +220,17 @@ CREATE TABLE `stok_hareketleri` (
   KEY `idx_urun` (`urun_id`),
   KEY `idx_tarih` (`tarih`),
   CONSTRAINT `1` FOREIGN KEY (`urun_id`) REFERENCES `urunler` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=23 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Table structure for table `tedarikciler`
+-- Table structure for table `tedarikciler_old`
 --
 
-DROP TABLE IF EXISTS `tedarikciler`;
+DROP TABLE IF EXISTS `tedarikciler_old`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
-CREATE TABLE `tedarikciler` (
+CREATE TABLE `tedarikciler_old` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `unvan` varchar(255) NOT NULL,
   `telefon` varchar(20) DEFAULT NULL,
@@ -182,4 +270,4 @@ CREATE TABLE `urunler` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*M!100616 SET NOTE_VERBOSITY=@OLD_NOTE_VERBOSITY */;
 
--- Dump completed on 2026-09-28 10:49:51
+-- Dump completed on 2026-10-01 20:17:56

@@ -58,3 +58,32 @@ export async function satisFaturaSilAction(id) {
         return { error: 'Fatura silinemedi.' };
     }
 }
+
+export async function satisFaturaTahsilatAction(prevState, formData) {
+    const fatura_id = Number(formData.get('fatura_id'));
+    const tutar = Number(formData.get('tutar'));
+    const tarih = formData.get('tarih');
+    const kasaya_yatir = formData.get('kasaya_yatir') === 'on';
+    const kasa_id = kasaya_yatir ? Number(formData.get('kasa_id')) : null;
+
+    if (!fatura_id) return { error: 'Fatura seçilmelidir.' };
+    if (!tutar || tutar <= 0) return { error: 'Tutar 0 olamaz.' };
+    if (!tarih) return { error: 'Tarih zorunludur.' };
+    if (kasaya_yatir && !kasa_id) return { error: 'Kasa seçilmelidir.' };
+
+    try {
+        const { satisFaturaTahsilatEkle } = await import('@/models/satisFaturaModel');
+        await satisFaturaTahsilatEkle(fatura_id, {
+            tutar, tarih, kasaya_yatir, kasa_id,
+        });
+        revalidatePath('/satis-faturalar');
+        revalidatePath(`/satis-faturalar/${fatura_id}`);
+        revalidatePath('/kasa');
+        revalidatePath('/kasa/hareketler');
+        revalidatePath('/cariler');
+    } catch (err) {
+        console.error('satisFaturaTahsilat:', err);
+        return { error: err.message || 'Tahsilat kaydedilemedi.' };
+    }
+    return { ok: true };
+}

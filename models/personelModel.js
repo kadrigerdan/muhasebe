@@ -151,3 +151,45 @@ export async function departmanListesi() {
       ORDER BY departman`
     );
 }
+
+// Dönem bazlı özet: hak ediş - ödenen = kalan
+export async function personelDonemOzeti(personelId) {
+    const [p] = await query(
+        'SELECT maas FROM personel WHERE id = ?',
+        [personelId]
+    );
+    if (!p) return [];
+    const maas = Number(p.maas ?? 0);
+
+    const odemeler = await query(
+        `SELECT
+       COALESCE(donem, DATE_FORMAT(tarih, '%Y-%m')) AS donem,
+       SUM(CASE WHEN odeme_tipi = 'prim'     THEN tutar ELSE 0 END) AS prim_odenen,
+       SUM(CASE WHEN odeme_tipi = 'ikramiye' THEN tutar ELSE 0 END) AS ikramiye_odenen,
+       SUM(CASE WHEN odeme_tipi IN ('maas','avans','prim','ikramiye','diger')
+                THEN tutar ELSE 0 END) AS toplam_odenen
+     FROM personel_odeme
+     WHERE personel_id = ?
+     GROUP BY COALESCE(donem, DATE_FORMAT(tarih, '%Y-%m'))
+     ORDER BY donem DESC`,
+        [personelId]
+    );
+
+    return odemeler.map((o) => {
+        const prim = Number(o.prim_odenen);
+        const ikramiye = Number(o.ikramiye_odenen);
+        const odenen = Number(o.toplam_odenen);
+        const hakEdis = maas + prim + ikramiye;   // prim + ikramiye maaşa eklenir
+        const kalan = hakEdis - odenen;           // avans + maaş düşülür
+        return {
+            donem: o.donem,
+            maas,
+            prim,
+            ikramiye,
+            hak_edis: hakEdis,
+            toplam_odenen: odenen,
+            kalan,
+            durum: kalan <= 0.01 ? 'odendi' : 'eksik',
+        };
+    });
+}
