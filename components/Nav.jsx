@@ -7,9 +7,11 @@ export function Nav() {
   const linkler = [
     { href: "/", label: "🏠 Ana Sayfa" },
     { href: "/cariler", label: "📦 Cariler" },
+    { href: "/alis-faturalar", label: "📄 Alış" },
+    { href: "/satis-faturalar", label: "📄 Satış" },
     { href: "/stok", label: "📦 Stok" },
-    { href: "/alis-faturalar", label: "📄 Alış Faturalar" },
-    { href: "/satis-faturalar", label: "📄 Satış Faturalar" },
+    { href: "/personel", label: "📦 Personel" },
+    { href: "/kasa", label: "📦 Kasa" }
   ];
 
   return (
