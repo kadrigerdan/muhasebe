@@ -1,19 +1,34 @@
 import Link from 'next/link';
 import { tumKasaHesaplari, kasaOzet } from '@/models/kasaModel';
+import { query } from '@/database/db';
 
 export const dynamic = 'force-dynamic';
 
 export default async function KasaPage() {
-  const [hesaplar, ozet] = await Promise.all([
+  const [hesaplar, genelOzet, tipOzetArr] = await Promise.all([
     tumKasaHesaplari(),
     kasaOzet(),
+    query(
+      `SELECT
+         COALESCE(SUM(CASE WHEN tip = 'nakit' THEN bakiye ELSE 0 END), 0) AS nakit,
+         COALESCE(SUM(CASE WHEN tip = 'banka' THEN bakiye ELSE 0 END), 0) AS banka,
+         COALESCE(SUM(CASE WHEN tip = 'pos'   THEN bakiye ELSE 0 END), 0) AS pos
+       FROM kasa_bakiye_view
+       WHERE aktif = 1`
+    ),
   ]);
+
+  const tipOzet = tipOzetArr[0];
 
   return (
     <div className="p-6 max-w-6xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Kasa</h1>
         <div className="flex gap-2">
+          <Link href="/kasa/virman"
+            className="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700">
+            Virman
+          </Link>
           <Link href="/kasa/hesaplar/yeni"
             className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
             + Yeni Kasa
@@ -23,18 +38,42 @@ export default async function KasaPage() {
             Tüm Hareketler
           </Link>
         </div>
+
+
       </div>
 
-      <div className="border rounded-lg p-5 bg-white">
-        <div className="text-sm text-gray-500 mb-1">Toplam Bakiye</div>
-        <div className="text-3xl font-bold">
-          {Number(ozet.toplam_bakiye).toFixed(2)} ₺
+      {/* Tip Bazlı Özet */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="border rounded-lg p-4 bg-white">
+          <div className="text-xs text-gray-500 mb-1">Nakit (Fiziksel)</div>
+          <div className="text-2xl font-bold text-green-700">
+            {Number(tipOzet.nakit).toFixed(2)} ₺
+          </div>
         </div>
-        <div className="text-xs text-gray-500 mt-1">
-          {String(ozet.aktif_kasa_sayisi)} aktif kasa
+        <div className="border rounded-lg p-4 bg-white">
+          <div className="text-xs text-gray-500 mb-1">Banka</div>
+          <div className="text-2xl font-bold text-blue-700">
+            {Number(tipOzet.banka).toFixed(2)} ₺
+          </div>
+        </div>
+        <div className="border rounded-lg p-4 bg-white">
+          <div className="text-xs text-gray-500 mb-1">POS</div>
+          <div className="text-2xl font-bold text-purple-700">
+            {Number(tipOzet.pos).toFixed(2)} ₺
+          </div>
+        </div>
+        <div className="border rounded-lg p-4 bg-gray-100">
+          <div className="text-xs text-gray-500 mb-1">Toplam Likidite</div>
+          <div className="text-2xl font-bold">
+            {Number(genelOzet.toplam_bakiye).toFixed(2)} ₺
+          </div>
+          <div className="text-xs text-gray-500 mt-1">
+            {String(genelOzet.aktif_kasa_sayisi)} aktif kasa
+          </div>
         </div>
       </div>
 
+      {/* Kasa Kartları */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {hesaplar.map((k) => (
           <Link key={String(k.id)} href={`/kasa/${k.id}`}
@@ -51,10 +90,8 @@ export default async function KasaPage() {
             <div className="text-2xl font-bold mb-2">
               {Number(k.bakiye).toFixed(2)} ₺
             </div>
-            <div className="text-xs text-gray-500 space-y-1">
-              <div>Açılış: {Number(k.acilis_bakiye).toFixed(2)} ₺</div>
-              <div className="text-green-700">+ Giriş: {Number(k.toplam_giris).toFixed(2)} ₺</div>
-              <div className="text-red-700">- Çıkış: {Number(k.toplam_cikis).toFixed(2)} ₺</div>
+            <div className="text-xs text-gray-500">
+              Açılış: {Number(k.acilis_bakiye).toFixed(2)} ₺
             </div>
           </Link>
         ))}

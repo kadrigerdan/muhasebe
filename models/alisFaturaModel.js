@@ -138,7 +138,7 @@ export async function alisFaturaOdemeEkle(faturaId, veri) {
     try {
         await conn.beginTransaction();
 
-        // 1) Fatura toplamını al
+        // Faturayı kilitle
         const [fatura] = await conn.query(
             `SELECT f.id, f.odenen_tutar,
               COALESCE(SUM(d.miktar * d.birim_fiyat), 0) AS toplam
@@ -156,15 +156,40 @@ export async function alisFaturaOdemeEkle(faturaId, veri) {
         const yeniOdenen = eskiOdenen + Number(veri.tutar);
 
         if (yeniOdenen > toplam + 0.01) {
-            throw new Error(`Ödeme tutarı fatura toplamını aşamaz. Kalan: ${(toplam - eskiOdenen).toFixed(2)} ₺`);
+            throw new Error(
+                `Ödeme fatura toplamını aşamaz. Kalan: ${(toplam - eskiOdenen).toFixed(2)} ₺`
+            );
         }
 
-        // 2) Durum hesapla
+        // Kasa bakiye kontrolü
+        if (veri.kasadan_dus && veri.kasa_id) {
+            const [kasa] = await conn.query(
+                'SELECT bakiye FROM kasa_bakiye_view WHERE id = ? FOR UPDATE',
+                [veri.kasa_id]
+            );
+            if (!kasa) throw new Error('Kasa bulunamadı.');
+            if (Number(kasa.bakiye) < Number(veri.tutar)) {
+                throw new Error(
+                    `Yetersiz kasa bakiyesi. Mevcut: ${Number(kasa.bakiye).toFixed(2)} ₺`
+                );
+            }
+        }
+
+        // Fatura ödeme kaydı
+        await conn.query(
+            `INSERT INTO fatura_odemeleri
+         (fatura_tipi, fatura_id, tutar, tarih, aciklama, kasadan_dus, kasa_id)
+       VALUES ('alis', ?, ?, ?, ?, ?, ?)`,
+            [faturaId, veri.tutar, veri.tarih,
+                veri.aciklama ?? null,
+                veri.kasadan_dus ? 1 : 0, veri.kasa_id ?? null]
+        );
+
+        // Fatura durumunu güncelle
         let durum = 'odenmedi';
         if (yeniOdenen >= toplam - 0.01) durum = 'odendi';
         else if (yeniOdenen > 0) durum = 'kismi';
 
-        // 3) Faturayı güncelle
         await conn.query(
             `UPDATE alis_faturalar
           SET odenen_tutar = ?, durum = ?
@@ -172,23 +197,8 @@ export async function alisFaturaOdemeEkle(faturaId, veri) {
             [yeniOdenen, durum, faturaId]
         );
 
-        // 4) Kasadan düş (opsiyonel)
-        let kasaHareketId = null;
-        if (veri.kasadan_dus && veri.kasa_id) {
-            const { hareketEkle } = await import('./kasaModel');
-            kasaHareketId = await hareketEkle(conn, {
-                kasa_id: veri.kasa_id,
-                tip: 'cikis',
-                tutar: Number(veri.tutar),
-                tarih: veri.tarih,
-                aciklama: `Alış faturası ödemesi #${faturaId}`,
-                kaynak_tipi: 'fatura_odeme',
-                kaynak_id: faturaId,
-            });
-        }
-
         await conn.commit();
-        return { ok: true, kasaHareketId, yeniOdenen, durum };
+        return { ok: true, yeniOdenen, durum };
     } catch (err) {
         await conn.rollback();
         throw err;

@@ -1,9 +1,7 @@
 "use client";
 import { useRef, useState, useActionState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { faturaKes } from "../actions/faturaActions";
-import { UrunEkleModal } from "../modals/urunEkleModal";
-import { FaturaKesModal } from "@/modals/faturaKesModal";
+
 
 export function FaturaForm({ urunler, musteriler }) {
   const router = useRouter();

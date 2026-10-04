@@ -30,7 +30,7 @@ export async function tedarikciListesi() {
 
 export async function musteriListesi() {
     return await query(
-        `SELECT id, unvan FROM cariler
+        `SELECT id, unvan,telefon,adres FROM cariler
       WHERE tip IN ('musteri','her_ikisi') AND aktif = 1
       ORDER BY unvan`
     );

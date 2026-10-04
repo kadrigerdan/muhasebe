@@ -5,7 +5,7 @@ import AlisFaturaForm from '@/components/alis-fatura/AlisFaturaForm';
 export default async function YeniAlisFaturaPage() {
     const cariler = await tedarikciListesi();
     const urunler = await query(
-        'SELECT id, urun_adi, stok, varsayilan_alis_fiyati FROM urunler WHERE durum = 1 ORDER BY urun_adi'
+        'SELECT id, urun_adi, stok, varsayilan_alis_fiyati,varsayilan_satis_fiyati FROM urunler WHERE durum = 1 ORDER BY urun_adi'
     );
 
     return (

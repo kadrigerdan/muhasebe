@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { getFaturalarAction, faturaSilAction } from "@/actions/faturaActions";
+
 
 export function FaturaListesi() {
   const [faturalar, setFaturalar] = useState([]);

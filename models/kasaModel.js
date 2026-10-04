@@ -1,46 +1,18 @@
 import { query, getConnection } from '@/database/db';
 
-// -------- KASA HESAPLARI --------
+// -------- KASA HESAPLARI (view'den) --------
 export async function tumKasaHesaplari() {
-    return await query(
-        `SELECT
-       k.id, k.ad, k.tip, k.banka_adi, k.iban, k.acilis_bakiye, k.aktif,
-       COALESCE(SUM(CASE WHEN h.tip = 'giris' THEN h.tutar ELSE 0 END), 0) AS toplam_giris,
-       COALESCE(SUM(CASE WHEN h.tip = 'cikis'  THEN h.tutar ELSE 0 END), 0) AS toplam_cikis,
-       k.acilis_bakiye
-         + COALESCE(SUM(CASE WHEN h.tip = 'giris' THEN h.tutar ELSE -h.tutar END), 0) AS bakiye
-     FROM kasa_hesaplari k
-     LEFT JOIN kasa_hareketleri h ON h.kasa_id = k.id
-     GROUP BY k.id, k.ad, k.tip, k.banka_adi, k.iban, k.acilis_bakiye, k.aktif
-     ORDER BY k.tip, k.ad`
-    );
+    return await query('SELECT * FROM kasa_bakiye_view ORDER BY tip, ad');
 }
 
 export async function aktifKasaHesaplari() {
     return await query(
-        `SELECT
-       k.id, k.ad, k.tip,
-       k.acilis_bakiye
-         + COALESCE(SUM(CASE WHEN h.tip = 'giris' THEN h.tutar ELSE -h.tutar END), 0) AS bakiye
-     FROM kasa_hesaplari k
-     LEFT JOIN kasa_hareketleri h ON h.kasa_id = k.id
-     WHERE k.aktif = 1
-     GROUP BY k.id, k.ad, k.tip, k.acilis_bakiye
-     ORDER BY k.tip, k.ad`
+        'SELECT * FROM kasa_bakiye_view WHERE aktif = 1 ORDER BY tip, ad'
     );
 }
 
 export async function kasaGetir(id) {
-    const rows = await query(
-        `SELECT
-       k.*,
-       k.acilis_bakiye
-         + COALESCE((SELECT SUM(CASE WHEN tip = 'giris' THEN tutar ELSE -tutar END)
-                       FROM kasa_hareketleri WHERE kasa_id = k.id), 0) AS bakiye
-     FROM kasa_hesaplari k
-     WHERE k.id = ?`,
-        [id]
-    );
+    const rows = await query('SELECT * FROM kasa_bakiye_view WHERE id = ?', [id]);
     return rows[0] ?? null;
 }
 
@@ -74,10 +46,10 @@ export async function kasaSilDB(id) {
     return Number(res.affectedRows);
 }
 
-// -------- HAREKETLER --------
+// -------- HAREKETLER (sadece manuel) --------
 export async function kasaHareketleri(kasaId, limit = 200) {
     return await query(
-        `SELECT id, tip, tutar, tarih, aciklama, kaynak_tipi, kaynak_id, created_at
+        `SELECT id, tip, tutar, tarih, aciklama, created_at
        FROM kasa_hareketleri
       WHERE kasa_id = ?
       ORDER BY tarih DESC, id DESC
@@ -86,7 +58,7 @@ export async function kasaHareketleri(kasaId, limit = 200) {
     );
 }
 
-export async function tumKasaHareketleri({ kasaId, tip, baslangic, bitis } = {}) {
+export async function tumKasaHareketleri({ kasaId, tip } = {}) {
     const sartlar = ['1=1'];
     const params = [];
 
@@ -97,14 +69,6 @@ export async function tumKasaHareketleri({ kasaId, tip, baslangic, bitis } = {})
     if (tip) {
         sartlar.push('h.tip = ?');
         params.push(tip);
-    }
-    if (baslangic) {
-        sartlar.push('h.tarih >= ?');
-        params.push(baslangic);
-    }
-    if (bitis) {
-        sartlar.push('h.tarih <= ?');
-        params.push(bitis);
     }
 
     return await query(
@@ -118,32 +82,123 @@ export async function tumKasaHareketleri({ kasaId, tip, baslangic, bitis } = {})
     );
 }
 
-// -------- HAREKET EKLE (transaction'sız, çağıran taraf transaction açar) --------
+// Sadece manuel hareket ekler (transaction zorunlu — çağıran açar)
 export async function hareketEkle(conn, veri) {
     const res = await conn.query(
         `INSERT INTO kasa_hareketleri
-       (kasa_id, tip, tutar, tarih, aciklama, kaynak_tipi, kaynak_id)
-     VALUES (?, ?, ?, ?, ?, ?, ?)`,
-        [
-            veri.kasa_id, veri.tip, veri.tutar, veri.tarih,
-            veri.aciklama ?? null, veri.kaynak_tipi ?? 'diger',
-            veri.kaynak_id ?? null,
-        ]
+       (kasa_id, tip, tutar, tarih, aciklama)
+     VALUES (?, ?, ?, ?, ?)`,
+        [veri.kasa_id, veri.tip, veri.tutar, veri.tarih, veri.aciklama ?? null]
     );
     return Number(res.insertId);
+}
+
+// YENİ: Birleşik kasa ekstresi
+export async function kasaEkstresi(kasaId, limit = 500) {
+    return await query(
+        `SELECT 'manuel' AS kaynak_tipi, h.id AS kaynak_id, h.tip AS yon,
+            h.tutar, h.tarih, h.aciklama
+       FROM kasa_hareketleri h
+      WHERE h.kasa_id = ?
+
+     UNION ALL
+
+     SELECT 'personel_odeme' AS kaynak_tipi, po.id AS kaynak_id,
+            'cikis' AS yon, po.tutar, po.tarih,
+            CONCAT('Personel: ', p.ad, ' ', p.soyad, ' (', po.odeme_tipi, ')') AS aciklama
+       FROM personel_odeme po
+       JOIN personel p ON p.id = po.personel_id
+      WHERE po.kasa_id = ? AND po.kasadan_dus = 1
+
+     UNION ALL
+
+     SELECT CONCAT('fatura_', fo.fatura_tipi) AS kaynak_tipi,
+            fo.id AS kaynak_id,
+            CASE WHEN fo.fatura_tipi = 'satis' THEN 'giris' ELSE 'cikis' END AS yon,
+            fo.tutar, fo.tarih,
+            CONCAT('Fatura #', fo.fatura_id, ' (', fo.fatura_tipi, ')') AS aciklama
+       FROM fatura_odemeleri fo
+      WHERE fo.kasa_id = ? AND fo.kasadan_dus = 1
+
+      ORDER BY tarih DESC, kaynak_id DESC
+      LIMIT ?`,
+        [kasaId, kasaId, kasaId, limit]
+    );
 }
 
 // -------- ÖZET --------
 export async function kasaOzet() {
     const rows = await query(
         `SELECT
-       (SELECT COUNT(*) FROM kasa_hesaplari WHERE aktif = 1) AS aktif_kasa_sayisi,
-       COALESCE((
-         SELECT SUM(k.acilis_bakiye) + COALESCE(SUM(CASE WHEN h.tip = 'giris' THEN h.tutar ELSE -h.tutar END), 0)
-           FROM kasa_hesaplari k
-           LEFT JOIN kasa_hareketleri h ON h.kasa_id = k.id
-          WHERE k.aktif = 1
-       ), 0) AS toplam_bakiye`
+       COUNT(*) AS aktif_kasa_sayisi,
+       COALESCE(SUM(bakiye), 0) AS toplam_bakiye
+     FROM kasa_bakiye_view
+     WHERE aktif = 1`
     );
     return rows[0];
+}
+
+export async function kasaTipOzet() {
+    const rows = await query(
+        `SELECT
+       COALESCE(SUM(CASE WHEN tip = 'nakit' THEN bakiye ELSE 0 END), 0) AS nakit,
+       COALESCE(SUM(CASE WHEN tip = 'banka' THEN bakiye ELSE 0 END), 0) AS banka,
+       COALESCE(SUM(CASE WHEN tip = 'pos'   THEN bakiye ELSE 0 END), 0) AS pos,
+       COALESCE(SUM(bakiye), 0) AS toplam
+     FROM kasa_bakiye_view
+     WHERE aktif = 1`
+    );
+    return rows[0];
+}
+
+// -------- VİRMAN (transfer) --------
+export async function virmanYap(veri) {
+    const conn = await getConnection();
+    try {
+        await conn.beginTransaction();
+
+        const [kaynak] = await conn.query(
+            'SELECT bakiye FROM kasa_bakiye_view WHERE id = ? FOR UPDATE',
+            [veri.kaynak_id]
+        );
+        if (!kaynak) throw new Error('Kaynak kasa bulunamadı.');
+        if (Number(kaynak.bakiye) < Number(veri.tutar)) {
+            throw new Error(
+                `Kaynak kasada yetersiz bakiye. Mevcut: ${Number(kaynak.bakiye).toFixed(2)} ₺`
+            );
+        }
+
+        const [hedef] = await conn.query(
+            'SELECT id, ad FROM kasa_hesaplari WHERE id = ?',
+            [veri.hedef_id]
+        );
+        if (!hedef) throw new Error('Hedef kasa bulunamadı.');
+
+        const [kaynakKasa] = await conn.query(
+            'SELECT ad FROM kasa_hesaplari WHERE id = ?',
+            [veri.kaynak_id]
+        );
+
+        await conn.query(
+            `INSERT INTO kasa_hareketleri (kasa_id, tip, tutar, tarih, aciklama)
+       VALUES (?, 'cikis', ?, ?, ?)`,
+            [veri.kaynak_id, veri.tutar, veri.tarih,
+            `Virman → ${hedef.ad}${veri.aciklama ? ' (' + veri.aciklama + ')' : ''}`]
+        );
+
+        await conn.query(
+            `INSERT INTO kasa_hareketleri (kasa_id, tip, tutar, tarih, aciklama)
+       VALUES (?, 'giris', ?, ?, ?)`,
+            [veri.hedef_id, veri.tutar, veri.tarih,
+            `Virman ← ${kaynakKasa.ad}${veri.aciklama ? ' (' + veri.aciklama + ')' : ''}`]
+        );
+
+        await conn.commit();
+        return { ok: true };
+    } catch (err) {
+        await conn.rollback();
+        throw err;
+    } finally {
+        conn.release();
+    }
 }

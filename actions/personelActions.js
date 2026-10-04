@@ -109,35 +109,39 @@ export async function odemeEkleAction(prevState, formData) {
     try {
         await conn.beginTransaction();
 
-        const res = await conn.query(
-            `INSERT INTO personel_odeme
-         (personel_id, odeme_tipi, tutar, tarih, donem, aciklama, kasadan_dus)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`,
-            [personel_id, odeme_tipi, tutar, tarih, donem, aciklama, kasadan_dus ? 1 : 0]
-        );
-        const odemeId = Number(res.insertId);
-
+        // Kasa bakiye kontrolü (kasadan düşülüyorsa)
         if (kasadan_dus) {
-            const hareketId = await hareketEkle(conn, {
-                kasa_id, tip: 'cikis', tutar, tarih,
-                aciklama: `Personel ödemesi #${odemeId} (${odeme_tipi})`,
-                kaynak_tipi: 'personel_odeme', kaynak_id: odemeId,
-            });
-            await conn.query(
-                'UPDATE personel_odeme SET kasa_hareket_id = ? WHERE id = ?',
-                [hareketId, odemeId]
+            const [kasa] = await conn.query(
+                'SELECT bakiye FROM kasa_bakiye_view WHERE id = ? FOR UPDATE',
+                [kasa_id]
             );
+            if (!kasa) throw new Error('Kasa bulunamadı.');
+            if (Number(kasa.bakiye) < tutar) {
+                throw new Error(
+                    `Yetersiz kasa bakiyesi. Mevcut: ${Number(kasa.bakiye).toFixed(2)} ₺`
+                );
+            }
         }
+
+        // Tek kayıt: personel_odeme
+        await conn.query(
+            `INSERT INTO personel_odeme
+         (personel_id, odeme_tipi, tutar, tarih, donem, aciklama, kasadan_dus, kasa_id)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+            [personel_id, odeme_tipi, tutar, tarih, donem, aciklama,
+                kasadan_dus ? 1 : 0, kasa_id]
+        );
 
         await conn.commit();
         revalidatePath(`/personel/${personel_id}`);
         revalidatePath('/personel');
         revalidatePath('/kasa');
         revalidatePath('/kasa/hareketler');
+        if (kasa_id) revalidatePath(`/kasa/${kasa_id}`);
     } catch (err) {
         await conn.rollback();
         console.error('odemeEkle:', err);
-        return { error: 'Ödeme kaydedilemedi.' };
+        return { error: err.message || 'Ödeme kaydedilemedi.' };
     } finally {
         conn.release();
     }
@@ -145,27 +149,11 @@ export async function odemeEkleAction(prevState, formData) {
 }
 
 export async function odemeSilAction(id, personelId) {
-    const conn = await getConnection();
     try {
-        await conn.beginTransaction();
-
-        const [odeme] = await conn.query(
-            'SELECT kasa_hareket_id FROM personel_odeme WHERE id = ?',
-            [Number(id)]
-        );
-        if (odeme?.kasa_hareket_id) {
-            await conn.query(
-                'DELETE FROM kasa_hareketleri WHERE id = ?',
-                [odeme.kasa_hareket_id]
-            );
-        }
-
-        const res = await conn.query(
+        const res = await query(
             'DELETE FROM personel_odeme WHERE id = ?',
             [Number(id)]
         );
-
-        await conn.commit();
         if (Number(res.affectedRows) === 0)
             return { error: 'Ödeme bulunamadı.' };
 
@@ -175,10 +163,7 @@ export async function odemeSilAction(id, personelId) {
         revalidatePath('/kasa/hareketler');
         return { ok: true };
     } catch (err) {
-        await conn.rollback();
         console.error('odemeSil:', err);
         return { error: 'Ödeme silinemedi.' };
-    } finally {
-        conn.release();
     }
 }

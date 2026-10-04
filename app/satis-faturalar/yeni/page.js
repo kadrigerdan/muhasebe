@@ -5,7 +5,7 @@ import SatisFaturaForm from '@/components/satis-fatura/SatisFaturaForm';
 export default async function YeniSatisFaturaPage() {
     const cariler = await musteriListesi();
     const urunler = await query(
-        'SELECT id, urun_adi, stok, varsayilan_satis_fiyati FROM urunler WHERE durum = 1 ORDER BY urun_adi'
+        'SELECT id, urun_adi, stok, varsayilan_alis_fiyati, varsayilan_satis_fiyati FROM urunler WHERE durum = 1 ORDER BY urun_adi'
     );
 
     return (

@@ -167,8 +167,20 @@ export async function satisFaturaTahsilatEkle(faturaId, veri) {
         const yeniOdenen = eskiOdenen + Number(veri.tutar);
 
         if (yeniOdenen > toplam + 0.01) {
-            throw new Error(`Tahsilat tutarı fatura toplamını aşamaz. Kalan: ${(toplam - eskiOdenen).toFixed(2)} ₺`);
+            throw new Error(
+                `Tahsilat fatura toplamını aşamaz. Kalan: ${(toplam - eskiOdenen).toFixed(2)} ₺`
+            );
         }
+
+        // Kasaya yatırılıyorsa kasa bakiye kontrolü GEREKMEZ (kasa artıyor)
+        await conn.query(
+            `INSERT INTO fatura_odemeleri
+         (fatura_tipi, fatura_id, tutar, tarih, aciklama, kasadan_dus, kasa_id)
+       VALUES ('satis', ?, ?, ?, ?, ?, ?)`,
+            [faturaId, veri.tutar, veri.tarih,
+                veri.aciklama ?? null,
+                veri.kasaya_yatir ? 1 : 0, veri.kasa_id ?? null]
+        );
 
         let durum = 'odenmedi';
         if (yeniOdenen >= toplam - 0.01) durum = 'odendi';
@@ -181,22 +193,8 @@ export async function satisFaturaTahsilatEkle(faturaId, veri) {
             [yeniOdenen, durum, faturaId]
         );
 
-        let kasaHareketId = null;
-        if (veri.kasaya_yatir && veri.kasa_id) {
-            const { hareketEkle } = await import('./kasaModel');
-            kasaHareketId = await hareketEkle(conn, {
-                kasa_id: veri.kasa_id,
-                tip: 'giris',
-                tutar: Number(veri.tutar),
-                tarih: veri.tarih,
-                aciklama: `Satış faturası tahsilatı #${faturaId}`,
-                kaynak_tipi: 'fatura_tahsilat',
-                kaynak_id: faturaId,
-            });
-        }
-
         await conn.commit();
-        return { ok: true, kasaHareketId, yeniOdenen, durum };
+        return { ok: true, yeniOdenen, durum };
     } catch (err) {
         await conn.rollback();
         throw err;

@@ -150,7 +150,6 @@ CREATE TABLE `personel_odeme` (
   `donem` varchar(7) DEFAULT NULL,
   `aciklama` varchar(255) DEFAULT NULL,
   `kasadan_dus` tinyint(1) NOT NULL DEFAULT 0,
-  `kasa_hareket_id` int(11) DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT current_timestamp(),
   PRIMARY KEY (`id`),
   KEY `idx_personel` (`personel_id`),

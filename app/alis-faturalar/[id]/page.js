@@ -1,58 +1,91 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { alisFaturaGetir } from '@/models/alisFaturaModel';
+import { aktifKasaHesaplari } from '@/models/kasaModel';
+import OdemeForm from '@/components/alis-fatura/OdemeForm';
 
 export const dynamic = 'force-dynamic';
 
 export default async function AlisFaturaDetayPage({ params }) {
-    // Next.js 15: params Promise'tir
-    const p = await params;
-    const id = Number(p.id);
-    if (!id || Number.isNaN(id)) notFound();
+  const p = await params;
+  const id = Number(p.id);
+  if (!id || Number.isNaN(id)) notFound();
 
-    const fatura = await alisFaturaGetir(id);
-    if (!fatura) notFound();
+  const fatura = await alisFaturaGetir(id);
+  if (!fatura) notFound();
 
-    return (
-        <div className="p-6 max-w-4xl mx-auto space-y-6">
-            <div className="flex items-center justify-between">
-                <h1 className="text-2xl font-bold">Alış Faturası #{String(fatura.id)}</h1>
-                <Link href="/alis-faturalar" className="text-blue-600 hover:underline">
-                    ← Alış Faturaları
-                </Link>
-            </div>
+  const kasaHesaplari = await aktifKasaHesaplari();
 
-            <div className="grid grid-cols-2 gap-4 border rounded p-4">
-                <div><b>Tedarikçi:</b> {fatura.cari_unvan}</div>
-                <div><b>Tarih:</b> {new Date(fatura.tarih).toLocaleDateString('tr-TR')}</div>
-                <div><b>Toplam:</b> {fatura.toplam.toFixed(2)} ₺</div>
-            </div>
+  const toplam = Number(fatura.toplam);
+  const odenen = Number(fatura.odenen_tutar ?? 0);
+  const kalan = toplam - odenen;
 
-            <table className="w-full border-collapse border text-sm">
-                <thead className="bg-gray-100">
-                    <tr>
-                        <th className="border p-2 text-left">Ürün</th>
-                        <th className="border p-2 text-right">Miktar</th>
-                        <th className="border p-2 text-right">Birim Fiyat</th>
-                        <th className="border p-2 text-right">Satır Toplam</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {fatura.kalemler.map((k) => {
-                        const satir = Number(k.miktar) * Number(k.birim_fiyat);
-                        return (
-                            <tr key={String(k.id)}>
-                                <td className="border p-2">{k.urun_adi}</td>
-                                <td className="border p-2 text-right">{String(k.miktar)}</td>
-                                <td className="border p-2 text-right">
-                                    {Number(k.birim_fiyat).toFixed(2)} ₺
-                                </td>
-                                <td className="border p-2 text-right">{satir.toFixed(2)} ₺</td>
-                            </tr>
-                        );
-                    })}
-                </tbody>
-            </table>
+  const durumRenk = {
+    odenmedi: 'bg-red-100 text-red-700',
+    kismi: 'bg-yellow-100 text-yellow-700',
+    odendi: 'bg-green-100 text-green-700',
+  };
+  const durumEtiket = {
+    odenmedi: 'Ödenmedi',
+    kismi: 'Kısmi Ödendi',
+    odendi: 'Ödendi',
+  };
+
+  return (
+    <div className="p-6 max-w-4xl mx-auto space-y-6">
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold">Alış Faturası #{String(fatura.id)}</h1>
+        <Link href="/alis-faturalar" className="text-blue-600 hover:underline">
+          ← Alış Faturaları
+        </Link>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4 border rounded p-4">
+        <div><b>Tedarikçi:</b> {fatura.cari_unvan}</div>
+        <div><b>Tarih:</b> {new Date(fatura.tarih).toLocaleDateString('tr-TR')}</div>
+        <div><b>Toplam:</b> {toplam.toFixed(2)} ₺</div>
+        <div><b>Ödenen:</b> {odenen.toFixed(2)} ₺</div>
+        <div>
+          <b>Kalan:</b>{' '}
+          <span className={kalan > 0.01 ? 'text-red-700 font-bold' : 'text-green-700 font-bold'}>
+            {kalan.toFixed(2)} ₺
+          </span>
         </div>
-    );
+        <div>
+          <b>Durum:</b>{' '}
+          <span className={`text-xs px-2 py-0.5 rounded ${durumRenk[fatura.durum] || 'bg-gray-100'}`}>
+            {durumEtiket[fatura.durum] || fatura.durum}
+          </span>
+        </div>
+      </div>
+
+      <OdemeForm faturaId={id} kalan={kalan} kasaHesaplari={kasaHesaplari} />
+
+      <table className="w-full border-collapse border text-sm">
+        <thead className="bg-gray-100">
+          <tr>
+            <th className="border p-2 text-left">Ürün</th>
+            <th className="border p-2 text-right">Miktar</th>
+            <th className="border p-2 text-right">Birim Fiyat</th>
+            <th className="border p-2 text-right">Satır Toplam</th>
+          </tr>
+        </thead>
+        <tbody>
+          {fatura.kalemler.map((k) => {
+            const satir = Number(k.miktar) * Number(k.birim_fiyat);
+            return (
+              <tr key={String(k.id)}>
+                <td className="border p-2">{k.urun_adi}</td>
+                <td className="border p-2 text-right">{String(k.miktar)}</td>
+                <td className="border p-2 text-right">
+                  {Number(k.birim_fiyat).toFixed(2)} ₺
+                </td>
+                <td className="border p-2 text-right">{satir.toFixed(2)} ₺</td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  );
 }

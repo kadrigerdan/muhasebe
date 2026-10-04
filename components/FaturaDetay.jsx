@@ -1,7 +1,6 @@
 // app/components/FaturaDetay.jsx
 "use client";
 import { useState, useEffect } from "react";
-import { getFaturaAction } from "@/actions/faturaActions";
 
 
 export function FaturaDetay({ id }) {

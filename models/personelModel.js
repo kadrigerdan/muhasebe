@@ -88,7 +88,8 @@ export async function personelSilDB(id) {
 export async function personelOdemeleri(personelId) {
     return await query(
         `SELECT id, odeme_tipi, tutar, tarih, donem, aciklama,
-            kasadan_dus, kasa_hareket_id, created_at
+            kasadan_dus, 
+             created_at
        FROM personel_odeme
       WHERE personel_id = ?
       ORDER BY tarih DESC, id DESC`,

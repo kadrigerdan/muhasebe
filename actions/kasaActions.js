@@ -90,7 +90,7 @@ export async function kasaHareketEkleAction(prevState, formData) {
     try {
         await conn.beginTransaction();
         await hareketEkle(conn, {
-            kasa_id, tip, tutar, tarih, aciklama, kaynak_tipi: 'diger',
+            kasa_id, tip, tutar, tarih, aciklama,
         });
         await conn.commit();
         revalidatePath('/kasa');
@@ -126,4 +126,30 @@ export async function kasaHareketSilAction(id) {
     } finally {
         conn.release();
     }
+}
+
+export async function virmanAction(prevState, formData) {
+    const kaynak_id = Number(formData.get('kaynak_id'));
+    const hedef_id = Number(formData.get('hedef_id'));
+    const tutar = Number(formData.get('tutar'));
+    const tarih = formData.get('tarih');
+    const aciklama = formData.get('aciklama')?.trim() || null;
+
+    if (!kaynak_id) return { error: 'Kaynak kasa seçilmelidir.' };
+    if (!hedef_id) return { error: 'Hedef kasa seçilmelidir.' };
+    if (kaynak_id === hedef_id) return { error: 'Kaynak ve hedef aynı olamaz.' };
+    if (!tutar || tutar <= 0) return { error: 'Tutar 0 olamaz.' };
+    if (!tarih) return { error: 'Tarih zorunludur.' };
+
+    try {
+        const { virmanYap } = await import('@/models/kasaModel');
+        await virmanYap({ kaynak_id, hedef_id, tutar, tarih, aciklama });
+        revalidatePath('/kasa');
+        revalidatePath(`/kasa/${kaynak_id}`);
+        revalidatePath(`/kasa/${hedef_id}`);
+    } catch (err) {
+        console.error('virman:', err);
+        return { error: err.message || 'Virman yapılamadı.' };
+    }
+    return { ok: true };
 }
