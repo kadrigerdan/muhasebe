@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import PersonelSilButton from './PersonelSilButton';
+import { paraFormat } from '@/lib/format';
 
 export default function PersonelList({ personel }) {
 
@@ -34,7 +35,7 @@ export default function PersonelList({ personel }) {
                         <td className="border p-2">{p.departman ?? '-'}</td>
                         <td className="border p-2">{p.telefon ?? '-'}</td>
                         <td className="border p-2 text-right">
-                            {Number(p.maas).toFixed(2)} ₺
+                            {paraFormat(p.maas)} ₺
                         </td>
                         <td className="border p-2">
                             {new Date(p.ise_giris_tarihi).toLocaleDateString('tr-TR')}

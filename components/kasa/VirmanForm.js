@@ -3,6 +3,7 @@
 import { useActionState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { virmanAction } from '@/actions/kasaActions';
+import { paraFormat } from '@/lib/format';
 
 export default function VirmanForm({ kasaHesaplari }) {
   const router = useRouter();
@@ -35,7 +36,7 @@ export default function VirmanForm({ kasaHesaplari }) {
             <option value="">-- Seç --</option>
             {kasaHesaplari.map((k) => (
               <option key={k.id} value={k.id}>
-                {k.ad} — bakiye: {Number(k.bakiye).toFixed(2)} ₺
+                {k.ad} — bakiye: {paraFormat(k.bakiye)} ₺
               </option>
             ))}
           </select>
@@ -47,7 +48,7 @@ export default function VirmanForm({ kasaHesaplari }) {
             <option value="">-- Seç --</option>
             {kasaHesaplari.map((k) => (
               <option key={k.id} value={k.id}>
-                {k.ad} — bakiye: {Number(k.bakiye).toFixed(2)} ₺
+                {k.ad} — bakiye: {paraFormat(k.bakiye)} ₺
               </option>
             ))}
           </select>

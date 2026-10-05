@@ -1,6 +1,5 @@
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { FaturaForm } from "@/components/FaturaForm";
 import Link from "next/link";
 import { Nav } from "@/components/Nav";
 

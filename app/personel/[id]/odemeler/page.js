@@ -7,6 +7,7 @@ import {
 import { aktifKasaHesaplari } from '@/models/kasaModel';
 import OdemeForm from '@/components/personel/OdemeForm';
 import OdemeSilButton from '@/components/personel/OdemeSilButton';
+import { paraFormat } from '@/lib/format';
 
 export const dynamic = 'force-dynamic';
 
@@ -41,19 +42,19 @@ export default async function PersonelOdemelerPage({ params }) {
         <div className="border rounded p-3 bg-white">
           <div className="text-xs text-gray-500">Aylık Maaş</div>
           <div className="text-xl font-bold">
-            {Number(personel.maas).toFixed(2)} ₺
+            {paraFormat(personel.maas)} ₺
           </div>
         </div>
         <div className="border rounded p-3 bg-white">
           <div className="text-xs text-gray-500">Toplam Ödenen</div>
           <div className="text-xl font-bold text-blue-700">
-            {Number(ozet.toplam_odenen).toFixed(2)} ₺
+            {paraFormat(ozet.toplam_odenen)} ₺
           </div>
         </div>
         <div className="border rounded p-3 bg-white">
           <div className="text-xs text-gray-500">Toplam Avans</div>
           <div className="text-xl font-bold text-yellow-700">
-            {Number(ozet.toplam_avans).toFixed(2)} ₺
+            {paraFormat(ozet.toplam_avans)} ₺
           </div>
         </div>
       </div>
@@ -87,14 +88,14 @@ export default async function PersonelOdemelerPage({ params }) {
                 <tr key={d.donem}>
                   <td className="border p-2 font-medium">{d.donem}</td>
                   <td className="border p-2 text-right">
-                    {Number(d.hak_edis).toFixed(2)} ₺
+                    {paraFormat(d.hak_edis)} ₺
                   </td>
                   <td className="border p-2 text-right">
-                    {Number(d.toplam_odenen).toFixed(2)} ₺
+                    {paraFormat(d.toplam_odenen)} ₺
                   </td>
                   <td className={`border p-2 text-right font-bold ${Number(d.kalan) > 0.01 ? 'text-red-700' : 'text-green-700'
                     }`}>
-                    {Number(d.kalan).toFixed(2)} ₺
+                    {paraFormat(d.kalan)} ₺
                   </td>
                   <td className="border p-2 text-center">
                     {d.durum === 'odendi' ? (
@@ -147,17 +148,17 @@ export default async function PersonelOdemelerPage({ params }) {
                 </td>
                 <td className="border p-2">
                   <span className={`text-xs px-2 py-0.5 rounded ${o.odeme_tipi === 'maas' ? 'bg-blue-100 text-blue-700' :
-                      o.odeme_tipi === 'avans' ? 'bg-yellow-100 text-yellow-700' :
-                        o.odeme_tipi === 'prim' ? 'bg-green-100 text-green-700' :
-                          o.odeme_tipi === 'kesinti' ? 'bg-red-100 text-red-700' :
-                            'bg-gray-100 text-gray-700'
+                    o.odeme_tipi === 'avans' ? 'bg-yellow-100 text-yellow-700' :
+                      o.odeme_tipi === 'prim' ? 'bg-green-100 text-green-700' :
+                        o.odeme_tipi === 'kesinti' ? 'bg-red-100 text-red-700' :
+                          'bg-gray-100 text-gray-700'
                     }`}>
                     {o.odeme_tipi}
                   </span>
                 </td>
                 <td className="border p-2">{o.donem ?? '-'}</td>
                 <td className="border p-2 text-right font-medium">
-                  {Number(o.tutar).toFixed(2)} ₺
+                  {paraFormat(o.tutar)} ₺
                 </td>
                 <td className="border p-2">{o.aciklama ?? '-'}</td>
                 <td className="border p-2 text-center text-xs">

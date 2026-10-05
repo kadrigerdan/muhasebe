@@ -3,6 +3,7 @@
 import { useActionState, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { odemeEkleAction } from '@/actions/personelActions';
+import { paraFormat } from '@/lib/format';
 
 export default function OdemeForm({ personelId, kasaHesaplari }) {
     const router = useRouter();
@@ -90,7 +91,7 @@ export default function OdemeForm({ personelId, kasaHesaplari }) {
                         <option value="">-- Kasa Seç --</option>
                         {kasaHesaplari.map((k) => (
                             <option key={k.id} value={k.id}>
-                                {k.ad} — bakiye: {Number(k.bakiye).toFixed(2)} ₺
+                                {k.ad} — bakiye: {paraFormat(k.bakiye)} ₺
                             </option>
                         ))}
                     </select>

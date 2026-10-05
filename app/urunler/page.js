@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { tumUrunler, urunOzet } from '@/models/urunModel';
 import UrunList from '@/components/urun/UrunList';
+import { paraFormat } from '@/lib/format';
 
 export const dynamic = 'force-dynamic';
 
@@ -29,13 +30,13 @@ export default async function UrunListPage() {
                 <div className="border rounded p-3 bg-white">
                     <div className="text-xs text-gray-500">Stok Değeri (Alış)</div>
                     <div className="text-xl font-bold">
-                        {Number(ozet.stok_degeri_alis).toFixed(2)} ₺
+                        {paraFormat(ozet.stok_degeri_alis)} ₺
                     </div>
                 </div>
                 <div className="border rounded p-3 bg-white">
                     <div className="text-xs text-gray-500">Stok Değeri (Satış)</div>
                     <div className="text-xl font-bold text-blue-700">
-                        {Number(ozet.stok_degeri_satis).toFixed(2)} ₺
+                        {paraFormat(ozet.stok_degeri_satis)} ₺
                     </div>
                 </div>
             </div>

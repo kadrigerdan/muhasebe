@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { tumPersonel, personelMaliOzet } from '@/models/personelModel';
 import PersonelList from '@/components/personel/PersonelList';
+import { paraFormat } from '@/lib/format';
 
 export const dynamic = 'force-dynamic';
 
@@ -34,7 +35,7 @@ export default async function PersonelListPage() {
                 <div className="border rounded p-3 bg-white">
                     <div className="text-xs text-gray-500">Aylık Maaş Toplamı</div>
                     <div className="text-xl font-bold">
-                        {Number(ozet.aylik_maas_toplam).toFixed(2)} ₺
+                        {paraFormat(ozet.aylik_maas_toplam)} ₺
                     </div>
                 </div>
             </div>

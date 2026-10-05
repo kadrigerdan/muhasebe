@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import UrunSilButton from './UrunSilButton';
+import { paraFormat } from '@/lib/format';
 
 export default function UrunList({ urunler }) {
     return (
@@ -34,8 +35,8 @@ export default function UrunList({ urunler }) {
                     return (
                         <tr key={String(u.id)} className={tukendi ? 'bg-red-50' : kritikMi ? 'bg-yellow-50' : ''}>
                             <td className="border p-2 font-medium">{u.urun_adi}</td>
-                            <td className="border p-2 text-right">{alis.toFixed(2)} ₺</td>
-                            <td className="border p-2 text-right">{satis.toFixed(2)} ₺</td>
+                            <td className="border p-2 text-right">{paraFormat(alis)} ₺</td>
+                            <td className="border p-2 text-right">{paraFormat(satis)} ₺</td>
                             <td className={`border p-2 text-right ${marj >= 0 ? 'text-green-700' : 'text-red-700'}`}>
                                 {marj.toFixed(1)}%
                             </td>

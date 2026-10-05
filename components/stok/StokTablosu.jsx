@@ -2,8 +2,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getStokListesiAction } from "@/actions/stokActions";
-import { StokDuzenleModal } from "../modals/StokDuzenleModal";
-import { StokHareketModal } from "../modals/StokHareketModal";
+import { StokDuzenleModal } from "@/modals/StokDuzenleModal";
+import { StokHareketModal } from "@/modals/StokHareketModal";
+import { paraFormat } from "@/lib/format";
 
 export function StokTablosu() {
   const router = useRouter();
@@ -84,10 +85,10 @@ export function StokTablosu() {
                 >
                   <td className="px-3 py-2 border">{u.urun_adi}</td>
                   <td className="px-3 py-2 border text-right">
-                    {Number(u.varsayilan_alis_fiyati).toFixed(2)} ₺
+                    {paraFormat(u.varsayilan_alis_fiyati)} ₺
                   </td>
                   <td className="px-3 py-2 border text-right">
-                    {Number(u.varsayilan_satis_fiyati).toFixed(2)} ₺
+                    {paraFormat(u.varsayilan_satis_fiyati)} ₺
                   </td>
                   <td className="px-3 py-2 border text-center">
                     {u.kritik_seviye ?? 0}

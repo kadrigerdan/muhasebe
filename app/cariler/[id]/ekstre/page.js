@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { cariGetir, cariEkstre } from '@/models/cariModel';
+import { paraFormat } from '@/lib/format';
 
 export const dynamic = 'force-dynamic';
 
@@ -26,16 +27,16 @@ export default async function CariEkstrePage({ params }) {
             <div className="grid grid-cols-3 gap-3">
                 <div className="border rounded p-3 bg-white">
                     <div className="text-xs text-gray-500">Toplam Borç</div>
-                    <div className="text-xl font-bold">{toplamBorc.toFixed(2)} ₺</div>
+                    <div className="text-xl font-bold">{paraFormat(toplamBorc)} ₺</div>
                 </div>
                 <div className="border rounded p-3 bg-white">
                     <div className="text-xs text-gray-500">Toplam Alacak</div>
-                    <div className="text-xl font-bold">{toplamAlacak.toFixed(2)} ₺</div>
+                    <div className="text-xl font-bold">{paraFormat(toplamAlacak)} ₺</div>
                 </div>
                 <div className="border rounded p-3 bg-white">
                     <div className="text-xs text-gray-500">Net Bakiye</div>
                     <div className={`text-xl font-bold ${bakiye >= 0 ? 'text-green-700' : 'text-red-700'}`}>
-                        {bakiye.toFixed(2)} ₺
+                        {paraFormat(bakiye)} ₺
                     </div>
                 </div>
             </div>
@@ -76,13 +77,13 @@ export default async function CariEkstrePage({ params }) {
                                 </Link>
                             </td>
                             <td className="border p-2 text-right">
-                                {Number(h.borc) > 0 ? Number(h.borc).toFixed(2) + ' ₺' : '-'}
+                                {Number(h.borc) > 0 ? paraFormat(h.borc) + ' ₺' : '-'}
                             </td>
                             <td className="border p-2 text-right">
-                                {Number(h.alacak) > 0 ? Number(h.alacak).toFixed(2) + ' ₺' : '-'}
+                                {Number(h.alacak) > 0 ? paraFormat(h.alacak) + ' ₺' : '-'}
                             </td>
                             <td className="border p-2 text-right font-medium">
-                                {Number(h.bakiye).toFixed(2)} ₺
+                                {paraFormat(h.bakiye)} ₺
                             </td>
                         </tr>
                     ))}

@@ -1,4 +1,4 @@
-import { StokTablosu } from "@/components/StokTablosu";
+import { StokTablosu } from "@/components/stok/StokTablosu";
 import Link from "next/link";
 
 export const metadata = { title: "Stok" };
