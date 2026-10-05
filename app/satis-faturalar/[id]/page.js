@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { satisFaturaGetir } from '@/models/satisFaturaModel';
 import { aktifKasaHesaplari } from '@/models/kasaModel';
 import TahsilatForm from '@/components/satis-fatura/TahsilatForm';
+import { paraFormat } from '@/lib/format';
 
 export const dynamic = 'force-dynamic';
 
@@ -43,12 +44,13 @@ export default async function SatisFaturaDetayPage({ params }) {
       <div className="grid grid-cols-2 gap-4 border rounded p-4">
         <div><b>Müşteri:</b> {fatura.cari_unvan}</div>
         <div><b>Tarih:</b> {new Date(fatura.tarih).toLocaleDateString('tr-TR')}</div>
-        <div><b>Toplam:</b> {toplam.toFixed(2)} ₺</div>
-        <div><b>Tahsil Edilen:</b> {odenen.toFixed(2)} ₺</div>
+        <div><b>Toplam:</b> {paraFormat(toplam)} ₺</div>
+        <div><b>Kalan:</b> {paraFormat(kalan)} ₺
+        </div>
         <div>
           <b>Kalan:</b>{' '}
           <span className={kalan > 0.01 ? 'text-red-700 font-bold' : 'text-green-700 font-bold'}>
-            {kalan.toFixed(2)} ₺
+            {paraFormat(kalan)} ₺
           </span>
         </div>
         <div>
@@ -78,9 +80,10 @@ export default async function SatisFaturaDetayPage({ params }) {
                 <td className="border p-2">{k.urun_adi}</td>
                 <td className="border p-2 text-right">{String(k.adet)}</td>
                 <td className="border p-2 text-right">
-                  {Number(k.birim_fiyat).toFixed(2)} ₺
+                  {paraFormat(k.birim_fiyat)} ₺
                 </td>
-                <td className="border p-2 text-right">{satir.toFixed(2)} ₺</td>
+                <td className="border p-2 text-right">{paraFormat(satir)} ₺
+                </td>
               </tr>
             );
           })}

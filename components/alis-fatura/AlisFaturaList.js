@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import AlisFaturaSilButton from './AlisFaturaSilButton';
+import { paraFormat } from '@/lib/format';
 
 export default function AlisFaturaList({ faturalar }) {
   return (
@@ -36,14 +37,14 @@ export default function AlisFaturaList({ faturalar }) {
                 {new Date(f.tarih).toLocaleDateString('tr-TR')}
               </td>
               <td className="border p-2 text-right">
-                {toplam.toFixed(2)} ₺
+                {paraFormat(toplam)} ₺
               </td>
               <td className="border p-2 text-right text-green-700">
-                {odenen.toFixed(2)} ₺
+                {paraFormat(odenen)} ₺
               </td>
               <td className={`border p-2 text-right font-medium ${kalan > 0.01 ? 'text-red-700' : 'text-gray-400'
                 }`}>
-                {kalan > 0.01 ? kalan.toFixed(2) + ' ₺' : '—'}
+                {kalan > 0.01 ? paraFormat(kalan) + ' ₺' : '—'}
               </td>
               <td className="border p-2 text-center">
                 {f.durum === 'odendi' && (

@@ -7,12 +7,14 @@ export function Nav() {
   const linkler = [
     { href: "/", label: "🏠 Ana Sayfa" },
     { href: "/cariler", label: "📦 Cariler" },
-    { href: "/alis-faturalar", label: "📄 Alış" },
-    { href: "/satis-faturalar", label: "📄 Satış" },
+    { href: "/urunler", label: "🔧 Ürünler" },  // ← EKLENDİ
+    { href: "/alis-faturalar", label: "💸 Alış" },
+    { href: "/satis-faturalar", label: "💰 Satış" },
     { href: "/stok", label: "📦 Stok" },
     { href: "/personel", label: "📦 Personel" },
-    { href: "/kasa", label: "📦 Kasa" }
+    { href: "/kasa", label: "📦 Kasa" },
   ];
+
 
   return (
     <nav className="sticky top-0 z-40 flex justify-center gap-1 py-1 border-b bg-white/90 dark:bg-gray-900/90 backdrop-blur">

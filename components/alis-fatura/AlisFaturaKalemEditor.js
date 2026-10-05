@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { paraFormat } from '@/lib/format';
 
 export default function AlisFaturaKalemEditor({ urunler, onChange }) {
   const [kalemler, setKalemler] = useState([]);
@@ -80,7 +81,7 @@ export default function AlisFaturaKalemEditor({ urunler, onChange }) {
                   >
                     {urunler.map((u) => (
                       <option key={u.id} value={u.id}>
-                        {u.urun_adi} — Alış: {Number(u.varsayilan_alis_fiyati).toFixed(2)} ₺ | Satış: {Number(u.varsayilan_satis_fiyati).toFixed(2)} ₺ (stok: {u.stok})
+                        {u.urun_adi} — Alış: {paraFormat(u.varsayilan_alis_fiyati)} ₺ | Satış: {paraFormat(u.varsayilan_satis_fiyati)} ₺ (stok: {u.stok})
                       </option>
                     ))}
                   </select>
@@ -105,7 +106,7 @@ export default function AlisFaturaKalemEditor({ urunler, onChange }) {
                     className="w-full border rounded px-2 py-1"
                   />
                 </td>
-                <td className="border p-1 text-right">{satir.toFixed(2)} ₺</td>
+                <td className="border p-1 text-right">{paraFormat(satir)} ₺</td>
                 <td className="border p-1 text-center">
                   <button
                     type="button"
@@ -126,7 +127,7 @@ export default function AlisFaturaKalemEditor({ urunler, onChange }) {
           Toplam Miktar: <b>{toplamMiktar}</b>
         </div>
         <div>
-          Toplam Tutar: <b>{toplam.toFixed(2)} ₺</b>
+          Toplam Tutar: <b>{paraFormat(toplam)} ₺</b>
         </div>
       </div>
     </div>

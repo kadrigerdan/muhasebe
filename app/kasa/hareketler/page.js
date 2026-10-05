@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { tumKasaHareketleri } from '@/models/kasaModel';
 import { tumKasaHesaplari } from '@/models/kasaModel';
+import { paraFormat } from '@/lib/format';
 
 export const dynamic = 'force-dynamic';
 
@@ -91,7 +92,7 @@ export default async function KasaHareketleriPage({ searchParams }) {
               <td className={`border p-2 text-right font-medium ${h.tip === 'giris' ? 'text-green-700' : 'text-red-700'
                 }`}>
                 {h.tip === 'giris' ? '+' : '-'}
-                {Number(h.tutar).toFixed(2)} ₺
+                {paraFormat(h.tutar)} ₺
               </td>
               <td className="border p-2 text-xs text-gray-600">
                 {h.kaynak_tipi}

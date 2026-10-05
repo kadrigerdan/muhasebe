@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { kasaGetir, kasaEkstresi } from '@/models/kasaModel';
 import HareketForm from '@/components/kasa/HareketForm';
+import { paraFormat } from '@/lib/format';
 
 export const dynamic = 'force-dynamic';
 
@@ -51,19 +52,19 @@ export default async function KasaDetayPage({ params }) {
         <div className="border rounded p-3 bg-white">
           <div className="text-xs text-gray-500">Bakiye</div>
           <div className="text-2xl font-bold">
-            {Number(kasa.bakiye).toFixed(2)} ₺
+            {paraFormat(kasa.bakiye)} ₺
           </div>
         </div>
         <div className="border rounded p-3 bg-white">
           <div className="text-xs text-gray-500">Toplam Giriş</div>
           <div className="text-xl font-bold text-green-700">
-            +{toplamGiris.toFixed(2)} ₺
+            +{paraFormat(toplamGiris)} ₺
           </div>
         </div>
         <div className="border rounded p-3 bg-white">
           <div className="text-xs text-gray-500">Toplam Çıkış</div>
           <div className="text-xl font-bold text-red-700">
-            -{toplamCikis.toFixed(2)} ₺
+            -{paraFormat(toplamCikis)} ₺
           </div>
         </div>
       </div>
@@ -114,7 +115,7 @@ export default async function KasaDetayPage({ params }) {
               <td className={`border p-2 text-right font-medium ${h.yon === 'giris' ? 'text-green-700' : 'text-red-700'
                 }`}>
                 {h.yon === 'giris' ? '+' : '-'}
-                {Number(h.tutar).toFixed(2)} ₺
+                {paraFormat(h.tutar)} ₺
               </td>
               <td className="border p-2">{h.aciklama ?? '-'}</td>
             </tr>

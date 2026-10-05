@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { tumAlisFaturalar, alisMaliOzet } from '@/models/alisFaturaModel';
 import AlisFaturaList from '@/components/alis-fatura/AlisFaturaList';
+import { paraFormat } from '@/lib/format';
 
 export const dynamic = 'force-dynamic';
 
@@ -26,7 +27,7 @@ export default async function AlisFaturaListPage() {
                 <div className="border rounded p-3 bg-white">
                     <div className="text-xs text-gray-500">Toplam Tutar</div>
                     <div className="text-xl font-bold">
-                        {Number(ozet.toplam_tutar).toFixed(2)} ₺
+                        {paraFormat(ozet.toplam_tutar)} ₺
                     </div>
                 </div>
                 <div className="border rounded p-3 bg-white">

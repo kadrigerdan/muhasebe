@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { tumKasaHesaplari, kasaOzet } from '@/models/kasaModel';
 import { query } from '@/database/db';
+import { paraFormat, sayiFormat } from '@/lib/format';
 
 export const dynamic = 'force-dynamic';
 
@@ -38,8 +39,6 @@ export default async function KasaPage() {
             Tüm Hareketler
           </Link>
         </div>
-
-
       </div>
 
       {/* Tip Bazlı Özet */}
@@ -47,28 +46,28 @@ export default async function KasaPage() {
         <div className="border rounded-lg p-4 bg-white">
           <div className="text-xs text-gray-500 mb-1">Nakit (Fiziksel)</div>
           <div className="text-2xl font-bold text-green-700">
-            {Number(tipOzet.nakit).toFixed(2)} ₺
+            {paraFormat(tipOzet.nakit)} ₺
           </div>
         </div>
         <div className="border rounded-lg p-4 bg-white">
           <div className="text-xs text-gray-500 mb-1">Banka</div>
           <div className="text-2xl font-bold text-blue-700">
-            {Number(tipOzet.banka).toFixed(2)} ₺
+            {paraFormat(tipOzet.banka)} ₺
           </div>
         </div>
         <div className="border rounded-lg p-4 bg-white">
           <div className="text-xs text-gray-500 mb-1">POS</div>
           <div className="text-2xl font-bold text-purple-700">
-            {Number(tipOzet.pos).toFixed(2)} ₺
+            {paraFormat(tipOzet.pos)} ₺
           </div>
         </div>
         <div className="border rounded-lg p-4 bg-gray-100">
           <div className="text-xs text-gray-500 mb-1">Toplam Likidite</div>
           <div className="text-2xl font-bold">
-            {Number(genelOzet.toplam_bakiye).toFixed(2)} ₺
+            {paraFormat(genelOzet.toplam_bakiye)} ₺
           </div>
           <div className="text-xs text-gray-500 mt-1">
-            {String(genelOzet.aktif_kasa_sayisi)} aktif kasa
+            {sayiFormat(genelOzet.aktif_kasa_sayisi)} aktif kasa
           </div>
         </div>
       </div>
@@ -81,17 +80,17 @@ export default async function KasaPage() {
             <div className="flex items-center justify-between mb-2">
               <div className="font-bold">{k.ad}</div>
               <span className={`text-xs px-2 py-0.5 rounded ${k.tip === 'nakit' ? 'bg-green-100 text-green-700' :
-                k.tip === 'banka' ? 'bg-blue-100 text-blue-700' :
-                  'bg-purple-100 text-purple-700'
+                  k.tip === 'banka' ? 'bg-blue-100 text-blue-700' :
+                    'bg-purple-100 text-purple-700'
                 }`}>
                 {k.tip}
               </span>
             </div>
             <div className="text-2xl font-bold mb-2">
-              {Number(k.bakiye).toFixed(2)} ₺
+              {paraFormat(k.bakiye)} ₺
             </div>
             <div className="text-xs text-gray-500">
-              Açılış: {Number(k.acilis_bakiye).toFixed(2)} ₺
+              Açılış: {paraFormat(k.acilis_bakiye)} ₺
             </div>
           </Link>
         ))}

@@ -3,6 +3,7 @@
 import { useActionState, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { alisFaturaOdemeAction } from '@/actions/alisFaturaActions';
+import { paraFormat } from '@/lib/format';
 
 export default function OdemeForm({ faturaId, kalan, kasaHesaplari }) {
     const router = useRouter();
@@ -56,7 +57,7 @@ export default function OdemeForm({ faturaId, kalan, kasaHesaplari }) {
                         className="w-full border rounded px-3 py-2"
                     />
                     <div className="text-xs text-gray-500 mt-1">
-                        Kalan: {kalan.toFixed(2)} ₺
+                        Kalan: {paraFormat(kalan)} ₺
                     </div>
                 </div>
 
@@ -106,7 +107,7 @@ export default function OdemeForm({ faturaId, kalan, kasaHesaplari }) {
                         <option value="">-- Kasa Seç --</option>
                         {kasaHesaplari.map((k) => (
                             <option key={k.id} value={k.id}>
-                                {k.ad} — bakiye: {Number(k.bakiye).toFixed(2)} ₺
+                                {k.ad} — bakiye: {paraFormat(k.bakiye)} ₺
                             </option>
                         ))}
                     </select>

@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { query } from '@/database/db';
 import { kasaTipOzet, kasaOzet } from '@/models/kasaModel';
+import { paraFormat, sayiFormat } from '@/lib/format';
 
 export const dynamic = 'force-dynamic';
 
@@ -43,28 +44,28 @@ export default async function AnaSayfa() {
           <Link href="/kasa" className="border rounded-lg p-4 bg-white hover:shadow-md transition">
             <div className="text-xs text-gray-500 mb-1">Nakit (Fiziksel)</div>
             <div className="text-2xl font-bold text-green-700">
-              {Number(kasaTip.nakit).toFixed(2)} ₺
+              {paraFormat(kasaTip.nakit)} ₺
             </div>
           </Link>
           <Link href="/kasa" className="border rounded-lg p-4 bg-white hover:shadow-md transition">
             <div className="text-xs text-gray-500 mb-1">Banka</div>
             <div className="text-2xl font-bold text-blue-700">
-              {Number(kasaTip.banka).toFixed(2)} ₺
+              {paraFormat(kasaTip.banka)} ₺
             </div>
           </Link>
           <Link href="/kasa" className="border rounded-lg p-4 bg-white hover:shadow-md transition">
             <div className="text-xs text-gray-500 mb-1">POS</div>
             <div className="text-2xl font-bold text-purple-700">
-              {Number(kasaTip.pos).toFixed(2)} ₺
+              {paraFormat(kasaTip.pos)} ₺
             </div>
           </Link>
           <Link href="/kasa" className="border rounded-lg p-4 bg-gray-100 hover:shadow-md transition">
             <div className="text-xs text-gray-500 mb-1">Toplam Likidite</div>
             <div className="text-2xl font-bold">
-              {Number(kasaGenel.toplam_bakiye).toFixed(2)} ₺
+              {paraFormat(kasaGenel.toplam_bakiye)} ₺
             </div>
             <div className="text-xs text-gray-500 mt-1">
-              {String(kasaGenel.aktif_kasa_sayisi)} aktif kasa
+              {sayiFormat(kasaGenel.aktif_kasa_sayisi)} aktif kasa
             </div>
           </Link>
         </div>
@@ -74,54 +75,58 @@ export default async function AnaSayfa() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Link href="/cariler" className="border rounded-lg p-4 bg-white hover:shadow-md transition">
           <div className="text-xs text-gray-500 mb-1">Aktif Cari</div>
-          <div className="text-2xl font-bold">{String(cariSayi.toplam)}</div>
+          <div className="text-2xl font-bold">{sayiFormat(cariSayi.toplam)}</div>
         </Link>
         <Link href="/urunler" className="border rounded-lg p-4 bg-white hover:shadow-md transition">
           <div className="text-xs text-gray-500 mb-1">Aktif Ürün</div>
-          <div className="text-2xl font-bold">{String(urunSayi.toplam)}</div>
+          <div className="text-2xl font-bold">{sayiFormat(urunSayi.toplam)}</div>
         </Link>
         <Link href="/personel" className="border rounded-lg p-4 bg-white hover:shadow-md transition">
           <div className="text-xs text-gray-500 mb-1">Aktif Personel</div>
-          <div className="text-2xl font-bold">{String(personelSayi.toplam)}</div>
+          <div className="text-2xl font-bold">{sayiFormat(personelSayi.toplam)}</div>
         </Link>
         <Link href="/stok" className="border rounded-lg p-4 bg-white hover:shadow-md transition">
           <div className="text-xs text-gray-500 mb-1">Stok Değeri</div>
           <div className="text-2xl font-bold">
-            {Number(stokDeger.deger).toFixed(2)} ₺
+            {paraFormat(stokDeger.deger)} ₺
           </div>
         </Link>
       </div>
 
-      {/* UYARILAR */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      {/* UYARILAR + ALIŞ/SATIŞ/KÂR — Tek Sıra */}
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
         <Link href="/stok" className="border rounded-lg p-4 bg-red-50 hover:shadow-md transition">
           <div className="text-xs text-red-600 mb-1">Tükenen Ürün</div>
-          <div className="text-2xl font-bold text-red-700">{String(tukenenSayi.toplam)}</div>
+          <div className="text-2xl font-bold text-red-700">
+            {sayiFormat(tukenenSayi.toplam)}
+          </div>
         </Link>
+
         <Link href="/stok" className="border rounded-lg p-4 bg-yellow-50 hover:shadow-md transition">
           <div className="text-xs text-yellow-600 mb-1">Kritik Stok</div>
-          <div className="text-2xl font-bold text-yellow-700">{String(kritikSayi.toplam)}</div>
+          <div className="text-2xl font-bold text-yellow-700">
+            {sayiFormat(kritikSayi.toplam)}
+          </div>
         </Link>
-      </div>
 
-      {/* ALIŞ / SATIŞ / KÂR */}
-      <div className="grid grid-cols-3 gap-4">
-        <Link href="/alis-faturalar" className="border rounded-lg p-5 bg-white hover:shadow-md transition">
+        <Link href="/alis-faturalar" className="border rounded-lg p-4 bg-white hover:shadow-md transition">
           <div className="text-xs text-gray-500 mb-1">Toplam Alış</div>
           <div className="text-2xl font-bold text-orange-700">
-            {alisToplam.toFixed(2)} ₺
+            {paraFormat(alisToplam)} ₺
           </div>
         </Link>
-        <Link href="/satis-faturalar" className="border rounded-lg p-5 bg-white hover:shadow-md transition">
+
+        <Link href="/satis-faturalar" className="border rounded-lg p-4 bg-white hover:shadow-md transition">
           <div className="text-xs text-gray-500 mb-1">Toplam Satış</div>
           <div className="text-2xl font-bold text-green-700">
-            {satisToplam.toFixed(2)} ₺
+            {paraFormat(satisToplam)} ₺
           </div>
         </Link>
-        <div className={`border rounded-lg p-5 ${kar >= 0 ? 'bg-green-50' : 'bg-red-50'}`}>
+
+        <div className={`border rounded-lg p-4 ${kar >= 0 ? 'bg-green-50' : 'bg-red-50'}`}>
           <div className="text-xs text-gray-500 mb-1">Brüt Kâr</div>
           <div className={`text-2xl font-bold ${kar >= 0 ? 'text-green-700' : 'text-red-700'}`}>
-            {kar.toFixed(2)} ₺
+            {paraFormat(kar)} ₺
           </div>
         </div>
       </div>
