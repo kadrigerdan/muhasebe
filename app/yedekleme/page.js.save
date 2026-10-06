@@ -1,0 +1,10 @@
+for f in \
+  actions/yedeklemeActions.js \
+  components/yedekleme/YedekAlButton.js \
+  components/yedekleme/TamYedekAlButton.js \
+  components/yedekleme/YedekSilButton.js \
+  components/yedekleme/YedekIndirButton.js \
+  app/yedekleme/page.js; do
+  [ -f "$f" ] && echo "VAR: $f" || echo "YOK: $f"
+done
+

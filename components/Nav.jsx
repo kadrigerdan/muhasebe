@@ -13,6 +13,7 @@ export function Nav() {
     { href: "/stok", label: "📦 Stok" },
     { href: "/personel", label: "📦 Personel" },
     { href: "/kasa", label: "📦 Kasa" },
+    { href: "/yedekleme", label: "💾 Yedekleme" },
   ];
 
 
