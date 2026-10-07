@@ -8,10 +8,12 @@ import {
 function formVerisiniAl(formData) {
     return {
         urun_adi: formData.get('urun_adi')?.trim(),
+        tip: formData.get('tip') || 'hammadde',
         kritik_seviye: Number(formData.get('kritik_seviye')) || 10,
         varsayilan_alis_fiyati: Number(formData.get('varsayilan_alis_fiyati')) || 0,
         varsayilan_satis_fiyati: Number(formData.get('varsayilan_satis_fiyati')) || 0,
         durum: formData.get('durum') === 'on' ? 1 : 0,
+        stok: Number(formData.get('stok')) || 0,      // ← YENİ
     };
 }
 
@@ -20,7 +22,7 @@ export async function urunEkleAction(prevState, formData) {
     if (!veri.urun_adi) return { error: 'Ürün adı zorunludur.' };
 
     try {
-        await urunOlustur({ ...veri, stok: 0 });
+        await urunOlustur(veri);   // ← stok: 0 silindi, veri içindeki stok kullanılsın
         revalidatePath('/urunler');
         revalidatePath('/stok');
     } catch (err) {

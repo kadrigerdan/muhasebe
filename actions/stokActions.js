@@ -7,9 +7,9 @@ import { revalidatePath } from "next/cache";
 export async function getStokListesiAction() {
     try {
         const urunler = await query(
-            `SELECT id, urun_adi, varsayilan_alis_fiyati, varsayilan_satis_fiyati,
-              stok, kritik_seviye, durum
-         FROM urunler  WHERE durum = 1    ORDER BY urun_adi ASC`
+            `SELECT id, urun_adi, tip, varsayilan_alis_fiyati, varsayilan_satis_fiyati,
+       stok, kritik_seviye, durum
+  FROM urunler WHERE durum = 1 ORDER BY urun_adi ASC`
         );
         return { success: true, data: urunler }
     } catch (e) {

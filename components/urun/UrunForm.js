@@ -31,6 +31,22 @@ export default function UrunForm({ initial, onSuccess }) {
                     className="w-full border rounded px-3 py-2" />
             </div>
 
+            <div>
+                <label className="block font-medium mb-1">Ürün Tipi *</label>
+                <select
+                    name="tip"
+                    required
+                    defaultValue={initial?.tip ?? 'hammadde'}
+                    className="w-full border rounded px-3 py-2"
+                >
+                    <option value="hammadde">Hammadde (Stokta tutulur)</option>
+                    <option value="satis_urunu">Satış Ürünü (Menüde görünür)</option>
+                </select>
+                <div className="text-xs text-gray-500 mt-1">
+                    Hammadde → Kıyma, kuşbaşı. Satış ürünü → Adana, lahmacun.
+                </div>
+            </div>
+
             <div className="grid grid-cols-2 gap-4">
                 <div>
                     <label className="block font-medium mb-1">Alış Fiyatı</label>
@@ -56,6 +72,17 @@ export default function UrunForm({ initial, onSuccess }) {
                         Stok bu seviyeye düşünce uyarı verir
                     </div>
                 </div>
+                {!initial && (
+                    <div>
+                        <label className="block font-medium mb-1">Başlangıç Stoğu</label>
+                        <input type="number" name="stok" min="0" step="1"
+                            defaultValue={0}
+                            className="w-full border rounded px-3 py-2" />
+                        <div className="text-xs text-gray-500 mt-1">
+                            Hammadde için başlangıç miktarı. Satış ürünleri için 0 bırakın.
+                        </div>
+                    </div>
+                )}
                 <div className="flex items-end">
                     <label className="flex items-center gap-2">
                         <input type="checkbox" name="durum"

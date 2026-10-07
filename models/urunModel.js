@@ -14,12 +14,12 @@ export async function tumUrunler({ arama, durum } = {}) {
   }
 
   return await query(
-    `SELECT id, urun_adi, kritik_seviye,
+    `SELECT id, urun_adi, tip, kritik_seviye,
             varsayilan_alis_fiyati, varsayilan_satis_fiyati,
             durum, stok, created_at
        FROM urunler
       WHERE ${sartlar.join(' AND ')}
-      ORDER BY urun_adi`,
+      ORDER BY tip, urun_adi`,
     params
   );
 }
@@ -32,10 +32,11 @@ export async function urunGetir(id) {
 export async function urunOlustur(veri) {
   const res = await query(
     `INSERT INTO urunler
-       (urun_adi, kritik_seviye, varsayilan_alis_fiyati, varsayilan_satis_fiyati, durum, stok)
-     VALUES (?, ?, ?, ?, ?, ?)`,
+       (urun_adi, tip, kritik_seviye, varsayilan_alis_fiyati, varsayilan_satis_fiyati, durum, stok)
+     VALUES (?, ?, ?, ?, ?, ?, ?)`,
     [
       veri.urun_adi,
+      veri.tip ?? 'hammadde',
       veri.kritik_seviye ?? 10,
       veri.varsayilan_alis_fiyati ?? 0,
       veri.varsayilan_satis_fiyati ?? 0,
@@ -50,6 +51,7 @@ export async function urunGuncelleDB(id, veri) {
   const res = await query(
     `UPDATE urunler
         SET urun_adi = ?,
+            tip = ?,
             kritik_seviye = ?,
             varsayilan_alis_fiyati = ?,
             varsayilan_satis_fiyati = ?,
@@ -57,6 +59,7 @@ export async function urunGuncelleDB(id, veri) {
       WHERE id = ?`,
     [
       veri.urun_adi,
+      veri.tip ?? 'hammadde',
       veri.kritik_seviye ?? 10,
       veri.varsayilan_alis_fiyati ?? 0,
       veri.varsayilan_satis_fiyati ?? 0,

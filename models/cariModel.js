@@ -92,6 +92,16 @@ export async function cariEkstre(cariId) {
 
      UNION ALL
 
+     SELECT 'alis_odeme' AS tip, fo.id AS fatura_id, fo.tarih,
+            fo.tutar AS tutar,
+            fo.tutar AS borc,
+            0 AS alacak
+       FROM fatura_odemeleri fo
+       JOIN alis_faturalar f ON f.id = fo.fatura_id AND fo.fatura_tipi = 'alis'
+      WHERE f.cari_id = ?
+
+     UNION ALL
+
      SELECT 'satis' AS tip, f.id AS fatura_id, f.tarih,
             COALESCE(SUM(d.adet * d.birim_fiyat), 0) AS tutar,
             COALESCE(SUM(d.adet * d.birim_fiyat), 0) AS borc,
@@ -101,8 +111,18 @@ export async function cariEkstre(cariId) {
       WHERE f.cari_id = ?
       GROUP BY f.id, f.tarih
 
-      ORDER BY tarih, fatura_id`,
-        [cariId, cariId]
+     UNION ALL
+
+     SELECT 'satis_tahsilat' AS tip, fo.id AS fatura_id, fo.tarih,
+            fo.tutar AS tutar,
+            0 AS borc,
+            fo.tutar AS alacak
+       FROM fatura_odemeleri fo
+       JOIN satis_faturalar f ON f.id = fo.fatura_id AND fo.fatura_tipi = 'satis'
+      WHERE f.cari_id = ?
+
+      ORDER BY tarih, tip, fatura_id`,
+        [cariId, cariId, cariId, cariId]
     );
 
     let toplamBorc = 0;
@@ -126,18 +146,31 @@ export async function cariBakiyeListesi() {
     return await query(
         `SELECT
        c.id, c.unvan, c.tip, c.telefon,
-       COALESCE(s.borc, 0)   AS toplam_borc,
-       COALESCE(a.alacak, 0) AS toplam_alacak,
-       COALESCE(s.borc, 0) - COALESCE(a.alacak, 0) AS bakiye
+       COALESCE(s.fatura_toplam, 0) - COALESCE(s.tahsilat, 0) AS toplam_borc,
+       COALESCE(a.fatura_toplam, 0) - COALESCE(a.odeme, 0)    AS toplam_alacak,
+       (COALESCE(s.fatura_toplam, 0) - COALESCE(s.tahsilat, 0))
+       - (COALESCE(a.fatura_toplam, 0) - COALESCE(a.odeme, 0)) AS bakiye
      FROM cariler c
      LEFT JOIN (
-       SELECT f.cari_id, SUM(d.adet * d.birim_fiyat) AS borc
+       SELECT f.cari_id,
+              SUM(d.adet * d.birim_fiyat) AS fatura_toplam,
+              (SELECT COALESCE(SUM(fo.tutar), 0)
+                 FROM fatura_odemeleri fo
+                WHERE fo.fatura_tipi = 'satis'
+                  AND fo.fatura_id IN (SELECT id FROM satis_faturalar WHERE cari_id = f.cari_id)
+              ) AS tahsilat
          FROM satis_faturalar f
          JOIN satis_fatura_detaylari d ON d.fatura_id = f.id
         GROUP BY f.cari_id
      ) s ON s.cari_id = c.id
      LEFT JOIN (
-       SELECT f.cari_id, SUM(d.miktar * d.birim_fiyat) AS alacak
+       SELECT f.cari_id,
+              SUM(d.miktar * d.birim_fiyat) AS fatura_toplam,
+              (SELECT COALESCE(SUM(fo.tutar), 0)
+                 FROM fatura_odemeleri fo
+                WHERE fo.fatura_tipi = 'alis'
+                  AND fo.fatura_id IN (SELECT id FROM alis_faturalar WHERE cari_id = f.cari_id)
+              ) AS odeme
          FROM alis_faturalar f
          JOIN alis_fatura_detaylari d ON d.fatura_id = f.id
         GROUP BY f.cari_id

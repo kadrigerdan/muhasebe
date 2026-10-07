@@ -36,17 +36,23 @@ export default async function SatisFaturaDetayPage({ params }) {
     <div className="p-6 max-w-4xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Satış Faturası #{String(fatura.id)}</h1>
-        <Link href="/satis-faturalar" className="text-blue-600 hover:underline">
-          ← Satış Faturaları
-        </Link>
+        <div className="flex gap-2">
+          <Link
+            href={`/satis-faturalar/${id}/yazdir`}
+            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 text-sm"
+          >
+            🖨️ Yazdır / PDF
+          </Link>
+          <Link href="/satis-faturalar" className="text-blue-600 hover:underline self-center">
+            ← Faturalar
+          </Link>
+        </div>
       </div>
 
       <div className="grid grid-cols-2 gap-4 border rounded p-4">
         <div><b>Müşteri:</b> {fatura.cari_unvan}</div>
         <div><b>Tarih:</b> {new Date(fatura.tarih).toLocaleDateString('tr-TR')}</div>
         <div><b>Toplam:</b> {paraFormat(toplam)} ₺</div>
-        <div><b>Kalan:</b> {paraFormat(kalan)} ₺
-        </div>
         <div>
           <b>Kalan:</b>{' '}
           <span className={kalan > 0.01 ? 'text-red-700 font-bold' : 'text-green-700 font-bold'}>

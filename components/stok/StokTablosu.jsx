@@ -30,14 +30,17 @@ export function StokTablosu() {
     const q = arama.trim().toLocaleLowerCase("tr");
     return urunler.filter((u) => {
       const eslesme = !q || u.urun_adi?.toLocaleLowerCase("tr").includes(q);
-      const kritik = Number(u.stok) <= Number(u.kritik_seviye ?? 0);
+      const kritik = u.tip === 'hammadde'
+        && Number(u.stok) <= Number(u.kritik_seviye ?? 0);
       return eslesme && (!sadeceKritik || kritik);
     });
   }, [arama, sadeceKritik, urunler]);
 
 
   const kritikSayi = useMemo(
-    () => urunler.filter((u) => Number(u.stok) <= Number(u.kritik_seviye ?? 0)).length,
+    () => urunler.filter((u) =>
+      u.tip === 'hammadde' && Number(u.stok) <= Number(u.kritik_seviye ?? 0)
+    ).length,
     [urunler]
   );
 
@@ -77,7 +80,8 @@ export function StokTablosu() {
           </thead>
           <tbody>
             {filtreli.map((u) => {
-              const kritik = Number(u.stok) <= Number(u.kritik_seviye ?? 0);
+              const kritik = u.tip === 'hammadde'
+                && Number(u.stok) <= Number(u.kritik_seviye ?? 0);
               return (
                 <tr
                   key={u.id}
