@@ -2,14 +2,14 @@ import Link from 'next/link';
 import { query } from '@/database/db';
 import { kasaTipOzet, kasaOzet } from '@/models/kasaModel';
 import { paraFormat, sayiFormat } from '@/lib/format';
+import { adisyonOzet } from '@/models/adisyonModel';
 
 export const dynamic = 'force-dynamic';
 
 export default async function AnaSayfa() {
   const [
     cariArr, urunArr, personelArr, stokArr, kritikArr, tukenenArr,
-    alisArr, satisArr,
-    kasaTip, kasaGenel,
+    alisArr, satisArr, kasaTip, kasaGenel, restoranOzet,
   ] = await Promise.all([
     query('SELECT COUNT(*) AS toplam FROM cariler WHERE aktif = 1'),
     query('SELECT COUNT(*) AS toplam FROM urunler WHERE durum = 1'),
@@ -21,6 +21,7 @@ export default async function AnaSayfa() {
     query('SELECT COALESCE(SUM(d.adet * d.birim_fiyat), 0) AS toplam FROM satis_faturalar f JOIN satis_fatura_detaylari d ON d.fatura_id = f.id'),
     kasaTipOzet(),
     kasaOzet(),
+    adisyonOzet(),
   ]);
 
   const cariSayi = cariArr[0];
@@ -32,6 +33,7 @@ export default async function AnaSayfa() {
   const alisToplam = Number(alisArr[0].toplam);
   const satisToplam = Number(satisArr[0].toplam);
   const kar = satisToplam - alisToplam;
+  const restoran = restoranOzet;
 
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6">
@@ -39,7 +41,7 @@ export default async function AnaSayfa() {
 
       {/* KASA DURUMU */}
       <div>
-        <div className="text-sm text-gray-500 mb-2">Kasa Durumu</div>
+        <div className="p-1.5 bg-white">Kasa Durumu</div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <Link href="/kasa" className="border rounded-lg p-4 bg-white hover:shadow-md transition">
             <div className="text-xs text-gray-500 mb-1">Nakit (Fiziksel)</div>
@@ -71,6 +73,8 @@ export default async function AnaSayfa() {
         </div>
       </div>
 
+
+
       {/* ANA KARTLAR */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Link href="/cariler" className="border rounded-lg p-4 bg-white hover:shadow-md transition">
@@ -92,6 +96,39 @@ export default async function AnaSayfa() {
           </div>
         </Link>
       </div>
+
+      {/* RESTORAN DURUMU */}
+      <div>
+        <div className=" p-1.5 bg-white ">Restoran Durumu</div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <Link href="/restoran" className="border rounded-lg p-4 bg-white hover:shadow-md transition">
+            <div className="text-xs text-gray-500 mb-1">Açık Adisyon</div>
+            <div className="text-2xl font-bold text-red-700">
+              {String(restoran.acik_adisyon)}
+            </div>
+          </Link>
+          <Link href="/mutfak" className="border rounded-lg p-4 bg-white hover:shadow-md transition">
+            <div className="text-xs text-gray-500 mb-1">Mutfakta Bekleyen</div>
+            <div className="text-2xl font-bold text-orange-700">
+              {String(restoran.mutfak_bekleyen)}
+            </div>
+          </Link>
+          <Link href="/restoran/rapor" className="border rounded-lg p-4 bg-white hover:shadow-md transition">
+            <div className="text-xs text-gray-500 mb-1">Bugün Kapanan</div>
+            <div className="text-2xl font-bold text-green-700">
+              {String(restoran.bugun_kapanan)}
+            </div>
+          </Link>
+          <Link href="/restoran/rapor" className="border rounded-lg p-4 bg-gray-100 hover:shadow-md transition">
+            <div className="text-xs text-gray-500 mb-1">Bugün Ciro</div>
+            <div className="text-2xl font-bold">
+              {paraFormat(restoran.bugun_ciro)} ₺
+            </div>
+          </Link>
+        </div>
+      </div>
+
+
 
       {/* UYARILAR + ALIŞ/SATIŞ/KÂR — Tek Sıra */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
@@ -152,6 +189,9 @@ export default async function AnaSayfa() {
           </Link>
           <Link href="/stok" className="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700">
             Stok Durumu
+          </Link>
+          <Link href="/restoran" className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
+            + Restoran
           </Link>
         </div>
       </div>

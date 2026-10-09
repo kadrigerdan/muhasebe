@@ -8,6 +8,10 @@ import {
     adisyonKalemSil,
     adisyonKapat,
     mutfakDurumGuncelle,
+    adisyonIptal,
+    mutfagaGonder,
+    mutfakIptal,
+    adisyonKalemAdetGuncelle,
 } from '@/models/adisyonModel';
 
 // Masa aç (adisyon yoksa oluştur, varsa mevcut ID'yi döndür)
@@ -96,5 +100,61 @@ export async function mutfakDurumAction(kalemId, yeniDurum) {
     } catch (err) {
         console.error('mutfakDurum:', err);
         return { error: 'Durum güncellenemedi.' };
+    }
+}
+
+export async function adisyonIptalAction(adisyonId, sebep) {
+    if (!adisyonId) return { error: 'Adisyon seçilmelidir.' };
+    try {
+        const res = await adisyonIptal(Number(adisyonId), sebep || 'musteri_iptal');
+        revalidatePath('/restoran');
+        revalidatePath('/mutfak');
+        revalidatePath('/stok');
+        return { ok: true, fire_adet: res.fire_adet || 0 };
+    } catch (err) {
+        console.error('adisyonIptal:', err);
+        return { error: err.message || 'Adisyon iptal edilemedi.' };
+    }
+}
+
+export async function mutfagaGonderAction(adisyonId) {
+    if (!adisyonId) return { error: 'Adisyon seçilmelidir.' };
+    try {
+        const adet = await mutfagaGonder(Number(adisyonId));
+        revalidatePath('/mutfak');
+        revalidatePath('/restoran');
+        return { ok: true, gonderilen: adet };
+    } catch (err) {
+        console.error('mutfagaGonder:', err);
+        return { error: 'Sipariş gönderilemedi.' };
+    }
+}
+
+
+export async function adisyonKalemAdetAction(kalemId, yeniAdet) {
+    if (!kalemId) return { error: 'Kalem seçilmelidir.' };
+    try {
+        await adisyonKalemAdetGuncelle(Number(kalemId), Number(yeniAdet));
+        revalidatePath('/restoran');
+        revalidatePath('/mutfak');
+        return { ok: true };
+    } catch (err) {
+        console.error('adisyonKalemAdet:', err);
+        return { error: err.message || 'Adet güncellenemedi.' };
+    }
+}
+
+
+export async function mutfakIptalAction(kalemId) {
+    if (!kalemId) return { error: 'Kalem seçilmelidir.' };
+    try {
+        await mutfakIptal(Number(kalemId));
+        revalidatePath('/mutfak');
+        revalidatePath('/restoran');
+        revalidatePath('/stok');
+        return { ok: true };
+    } catch (err) {
+        console.error('mutfakIptal:', err);
+        return { error: err.message || 'İptal edilemedi.' };
     }
 }
