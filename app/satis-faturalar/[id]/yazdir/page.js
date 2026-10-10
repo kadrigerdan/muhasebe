@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation';
 import { satisFaturaGetir } from '@/models/satisFaturaModel';
+import { ayarlariGetir } from '@/models/ayarlarModel';
 import { paraFormat } from '@/lib/format';
 import YazdirButonu from '@/components/fatura/YazdirButonu';
 
@@ -10,7 +11,10 @@ export default async function SatisFaturaYazdirPage({ params }) {
   const id = Number(p.id);
   if (!id || Number.isNaN(id)) notFound();
 
-  const fatura = await satisFaturaGetir(id);
+  const [fatura, ayarlar] = await Promise.all([
+    satisFaturaGetir(id),
+    ayarlariGetir(),
+  ]);
   if (!fatura) notFound();
 
   const toplam = Number(fatura.toplam);
@@ -27,6 +31,7 @@ export default async function SatisFaturaYazdirPage({ params }) {
       </div>
 
       <div className="max-w-3xl mx-auto p-8">
+        {/* Başlık */}
         <div className="flex justify-between items-start border-b-2 border-gray-800 pb-4 mb-6">
           <div>
             <h1 className="text-2xl font-bold">SATIŞ FATURASI</h1>
@@ -36,10 +41,20 @@ export default async function SatisFaturaYazdirPage({ params }) {
             </div>
           </div>
           <div className="text-right">
-            <div className="font-bold text-lg">ŞİRKET ADI</div>
-            <div className="text-xs text-gray-600">Adres satırı</div>
-            <div className="text-xs text-gray-600">Telefon: 000 000 00 00</div>
-            <div className="text-xs text-gray-600">Vergi No: 0000000000</div>
+            <div className="font-bold text-lg">
+              {ayarlar.sirket_adi || 'ŞİRKET ADI'}
+            </div>
+            {ayarlar.adres && (
+              <div className="text-xs text-gray-600 whitespace-pre-line">
+                {ayarlar.adres}
+              </div>
+            )}
+            {ayarlar.telefon && (
+              <div className="text-xs text-gray-600">Tel: {ayarlar.telefon}</div>
+            )}
+            {ayarlar.vergi_no && (
+              <div className="text-xs text-gray-600">Vergi No: {ayarlar.vergi_no}</div>
+            )}
           </div>
         </div>
 
@@ -89,9 +104,11 @@ export default async function SatisFaturaYazdirPage({ params }) {
           </div>
         </div>
 
-        <div className="border-t pt-4 text-xs text-gray-500 text-center">
-          Bu fatura bilgilendirme amaçlıdır.
-        </div>
+        {ayarlar.fatura_alt_not && (
+          <div className="border-t pt-4 text-xs text-gray-500 text-center">
+            {ayarlar.fatura_alt_not}
+          </div>
+        )}
       </div>
     </div>
   );

@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation';
 import { adisyonGetir } from '@/models/adisyonModel';
+import { ayarlariGetir } from '@/models/ayarlarModel';
 import { paraFormat } from '@/lib/format';
 import YazdirButonu from '@/components/fatura/YazdirButonu';
 
@@ -10,14 +11,16 @@ export default async function AdisyonYazdirPage({ params }) {
   const id = Number(p.id);
   if (!id || Number.isNaN(id)) notFound();
 
-  const adisyon = await adisyonGetir(id);
+  const [adisyon, ayarlar] = await Promise.all([
+    adisyonGetir(id),
+    ayarlariGetir(),
+  ]);
   if (!adisyon) notFound();
 
   const tarih = new Date(adisyon.acilis_tarih);
 
   return (
     <div className="bg-white min-h-screen">
-      {/* Yazdır Butonu */}
       <div className="print:hidden p-4 border-b bg-gray-50 flex justify-between items-center">
         <a href={`/restoran/${id}`} className="text-blue-600 hover:underline">
           ← Masaya Dön
@@ -25,13 +28,22 @@ export default async function AdisyonYazdirPage({ params }) {
         <YazdirButonu />
       </div>
 
-      {/* Fiş */}
       <div className="max-w-3xl mx-auto p-8">
         {/* Başlık */}
         <div className="text-center border-b-2 border-gray-800 pb-4 mb-6">
-          <div className="text-2xl font-bold">ŞİRKET ADI</div>
-          <div className="text-sm text-gray-600 mt-1">Adres satırı</div>
-          <div className="text-sm text-gray-600">Telefon: 000 000 00 00</div>
+          <div className="text-2xl font-bold">
+            {ayarlar.sirket_adi || 'ŞİRKET ADI'}
+          </div>
+          {ayarlar.adres && (
+            <div className="text-sm text-gray-600 mt-1 whitespace-pre-line">
+              {ayarlar.adres}
+            </div>
+          )}
+          <div className="text-sm text-gray-600 mt-1">
+            {ayarlar.telefon && <>Tel: {ayarlar.telefon}</>}
+            {ayarlar.telefon && ayarlar.vergi_no && ' • '}
+            {ayarlar.vergi_no && <>Vergi No: {ayarlar.vergi_no}</>}
+          </div>
         </div>
 
         {/* Adisyon Bilgisi */}
@@ -68,13 +80,6 @@ export default async function AdisyonYazdirPage({ params }) {
             </tr>
           </thead>
           <tbody>
-            {adisyon.kalemler.length === 0 && (
-              <tr>
-                <td colSpan={4} className="py-4 text-center text-gray-500 text-sm">
-                  Sipariş yok.
-                </td>
-              </tr>
-            )}
             {adisyon.kalemler.map((k) => (
               <tr key={String(k.id)} className="border-b border-gray-200">
                 <td className="py-2 text-sm">{k.urun_adi}</td>
@@ -104,9 +109,8 @@ export default async function AdisyonYazdirPage({ params }) {
 
         {/* Alt Not */}
         <div className="mt-8 pt-4 border-t text-center text-sm text-gray-600">
-          <div className="font-medium">Afiyet olsun! 🍽️</div>
-          <div className="text-xs mt-2 text-gray-400">
-            Bizi tercih ettiğiniz için teşekkürler.
+          <div className="font-medium whitespace-pre-line">
+            {ayarlar.fis_alt_not || 'Afiyet olsun! 🍽️'}
           </div>
         </div>
       </div>

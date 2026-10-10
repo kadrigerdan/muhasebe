@@ -1,10 +1,11 @@
 import { notFound } from 'next/navigation';
 import { adisyonGetir } from '@/models/adisyonModel';
+import { ayarlariGetir } from '@/models/ayarlarModel';
 import FisYazdirButonu from '@/components/restoran/FisYazdirButonu';
 
 export const dynamic = 'force-dynamic';
 
-const GENISLIK = 30;
+const GENISLIK = 36;
 
 function kisalt(str, max = GENISLIK) {
   if (!str) return '';
@@ -35,7 +36,10 @@ export default async function FisPage({ params }) {
   const id = Number(p.id);
   if (!id || Number.isNaN(id)) notFound();
 
-  const adisyon = await adisyonGetir(id);
+  const [adisyon, ayarlar] = await Promise.all([
+    adisyonGetir(id),
+    ayarlariGetir(),
+  ]);
   if (!adisyon) notFound();
 
   const tarih = new Date(adisyon.acilis_tarih);
@@ -47,9 +51,27 @@ export default async function FisPage({ params }) {
 
   const satirlar = [];
   satirlar.push(cizgi('='));
-  satirlar.push(orta('ŞİRKET ADI'));
-  satirlar.push(orta('Adres satırı'));
-  satirlar.push(orta('Tel: 000 000 00 00'));
+  satirlar.push(orta(kisalt(ayarlar.sirket_adi || 'ŞİRKET ADI')));
+  if (ayarlar.adres) {
+    // Adres uzunsa birden fazla satıra böl
+    const kelimeler = ayarlar.adres.split(' ');
+    let satir = '';
+    for (const kelime of kelimeler) {
+      if ((satir + ' ' + kelime).length > GENISLIK) {
+        satirlar.push(orta(satir.trim()));
+        satir = kelime;
+      } else {
+        satir = satir ? satir + ' ' + kelime : kelime;
+      }
+    }
+    if (satir.trim()) satirlar.push(orta(satir.trim()));
+  }
+  if (ayarlar.telefon) {
+    satirlar.push(orta(`Tel: ${ayarlar.telefon}`));
+  }
+  if (ayarlar.vergi_no) {
+    satirlar.push(orta(`Vergi No: ${ayarlar.vergi_no}`));
+  }
   satirlar.push(cizgi('='));
   satirlar.push(noktali(adisyon.masa_ad, `${tarihStr} ${saat}`));
   satirlar.push(`Adisyon #${adisyon.id}`);
@@ -69,9 +91,21 @@ export default async function FisPage({ params }) {
   satirlar.push(noktali('TOPLAM', `${Number(adisyon.toplam).toFixed(2)} TL`));
   satirlar.push(cizgi('='));
   satirlar.push('');
-  satirlar.push(orta('Afiyet olsun!'));
-  satirlar.push(orta('Bizi tercih ettiğiniz için'));
-  satirlar.push(orta('teşekkürler.'));
+
+  // Fiş alt notu (varsa) veya varsayılan
+  const altNot = ayarlar.fis_alt_not || 'Afiyet olsun!';
+  const altKelimeler = altNot.split(' ');
+  let altSatir = '';
+  for (const kelime of altKelimeler) {
+    if ((altSatir + ' ' + kelime).length > GENISLIK) {
+      satirlar.push(orta(altSatir.trim()));
+      altSatir = kelime;
+    } else {
+      altSatir = altSatir ? altSatir + ' ' + kelime : kelime;
+    }
+  }
+  if (altSatir.trim()) satirlar.push(orta(altSatir.trim()));
+
   satirlar.push('');
   satirlar.push(cizgi('='));
 
@@ -131,7 +165,7 @@ export default async function FisPage({ params }) {
         </div>
 
         <div className="p-4 flex justify-center">
-          <div className="fis-kagidi bg-white shadow-lg border rounded w-80 p-4">
+          <div className="fis-kagidi bg-white shadow-lg border rounded w-[340px] p-4">
             {satirlar.map((s, i) => (
               <div key={i}>{s}</div>
             ))}
