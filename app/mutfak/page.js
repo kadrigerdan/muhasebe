@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { mutfakBekleyenler, adisyonOzet } from '@/models/adisyonModel';
-import MutfakKalemKart from '@/components/restoran/MutfakKalemKart';
+import MutfakMasaKart from '@/components/restoran/MutfakMasaKart';
+import MutfakAutoRefresh from '@/components/restoran/MutfakAutoRefresh';
 
 export const dynamic = 'force-dynamic';
 
@@ -13,28 +14,46 @@ export default async function MutfakPage() {
   const bekleyenler = kalemler.filter((k) => k.mutfak_durum === 'bekliyor');
   const hazirlar = kalemler.filter((k) => k.mutfak_durum === 'hazir');
 
+  // Masa bazlı grupla
+  function masayaGoreGrupla(liste) {
+    const map = new Map();
+    for (const k of liste) {
+      const key = k.adisyon_id;
+      if (!map.has(key)) {
+        map.set(key, {
+          adisyon_id: k.adisyon_id,
+          masa_ad: k.masa_ad,
+          masa_tip: k.masa_tip,
+          acilis: k.created_at,
+          kalemler: [],
+        });
+      }
+      map.get(key).kalemler.push(k);
+    }
+    return Array.from(map.values());
+  }
+
+  const bekleyenMasalar = masayaGoreGrupla(bekleyenler);
+  const hazirMasalar = masayaGoreGrupla(hazirlar);
+
   return (
     <div className="p-6 max-w-6xl mx-auto space-y-6">
       {/* Başlık */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">🍳 Mutfak Ekranı</h1>
-          <div className="text-sm text-gray-500">
-            {new Date().toLocaleString('tr-TR')}
-          </div>
+          <MutfakAutoRefresh intervalMs={5000} />
         </div>
-        <div className="flex gap-2">
-          <Link
-            href="/restoran"
-            className="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700"
-          >
-            🍽️ Masalar
-          </Link>
-        </div>
+        <Link
+          href="/restoran"
+          className="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700"
+        >
+          🍽️ Masalar
+        </Link>
       </div>
 
       {/* Özet */}
-      <div className="grid grid-cols-1 md:grid-cols-3  gap-4">
+      <div className="grid grid-cols-3 gap-4">
         <div className="border rounded-lg p-4 bg-orange-50">
           <div className="text-xs text-orange-600 mb-1">Bekleyen Sipariş</div>
           <div className="text-3xl font-bold text-orange-700">
@@ -55,32 +74,32 @@ export default async function MutfakPage() {
         </div>
       </div>
 
-      {/* Bekleyen Siparişler */}
+      {/* Bekleyen Siparişler — Masa Bazlı */}
       <div>
         <h2 className="text-lg font-bold mb-3 text-orange-700">
-          🔔 Hazırlanacak Siparişler
+          🔔 Hazırlanacak — {bekleyenMasalar.length} masa
         </h2>
-        {bekleyenler.length === 0 && (
+        {bekleyenMasalar.length === 0 && (
           <div className="border rounded-lg p-6 text-center text-gray-500 bg-white">
             Bekleyen sipariş yok. 👍
           </div>
         )}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {bekleyenler.map((k) => (
-            <MutfakKalemKart key={String(k.id)} kalem={k} />
+          {bekleyenMasalar.map((m) => (
+            <MutfakMasaKart key={String(m.adisyon_id)} masa={m} />
           ))}
         </div>
       </div>
 
-      {/* Hazır Olanlar */}
-      {hazirlar.length > 0 && (
+      {/* Hazır Olanlar — Masa Bazlı */}
+      {hazirMasalar.length > 0 && (
         <div>
           <h2 className="text-lg font-bold mb-3 text-green-700">
-            ✅ Hazır — Servis Bekliyor
+            ✅ Hazır — {hazirMasalar.length} masa
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {hazirlar.map((k) => (
-              <MutfakKalemKart key={String(k.id)} kalem={k} />
+            {hazirMasalar.map((m) => (
+              <MutfakMasaKart key={String(m.adisyon_id)} masa={m} />
             ))}
           </div>
         </div>

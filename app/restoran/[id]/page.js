@@ -58,6 +58,18 @@ export default async function SiparisSayfasi({ params }) {
         </div>
 
         <div className="flex gap-2 items-center flex-wrap">
+          <Link
+            href={`/restoran/${adisyon.id}/yazdir`}
+            className="bg-purple-600 text-white px-3 py-2 rounded hover:bg-purple-700 text-sm font-medium"
+          >
+            🖨️ Hesap Yazdır
+          </Link>
+          <Link
+            href={`/restoran/${adisyon.id}/fis`}
+            className="bg-purple-600 text-white px-3 py-2 rounded hover:bg-purple-700 text-sm font-medium"
+          >
+            🧾 Fiş (80mm)
+          </Link>
           <a
             href="/mutfak"
             target="_blank"
