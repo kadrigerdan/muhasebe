@@ -7,7 +7,6 @@ import { query } from '@/database/db';
 export async function urunSablonAction() {
   try {
     const XLSX = await import('xlsx');
-
     const ornek = [
       {
         'Ürün Adı': 'Örnek Kalem',
@@ -26,26 +25,15 @@ export async function urunSablonAction() {
         'Satış Fiyatı': 40.0,
       },
     ];
-
     const ws = XLSX.utils.json_to_sheet(ornek);
     ws['!cols'] = [
-      { wch: 25 },
-      { wch: 15 },
-      { wch: 10 },
-      { wch: 15 },
-      { wch: 12 },
-      { wch: 12 },
+      { wch: 25 }, { wch: 15 }, { wch: 10 },
+      { wch: 15 }, { wch: 12 }, { wch: 12 },
     ];
-
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Ürünler');
-
     const buf = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
-    return {
-      ok: true,
-      icerik: buf.toString('base64'),
-      dosya: 'urun_sablonu.xlsx',
-    };
+    return { ok: true, icerik: buf.toString('base64'), dosya: 'urun_sablonu.xlsx' };
   } catch (err) {
     console.error('urunSablon:', err);
     return { error: 'Şablon oluşturulamadı.' };
@@ -53,7 +41,14 @@ export async function urunSablonAction() {
 }
 
 // ==================== ÜRÜN IMPORT ====================
-export async function urunImportAction(veriler) {
+export async function urunImportAction(verilerJson) {
+  let veriler;
+  try {
+    veriler = JSON.parse(verilerJson);
+  } catch {
+    return { error: 'Veri okunamadı.' };
+  }
+
   if (!Array.isArray(veriler) || !veriler.length) {
     return { error: 'Yüklenecek veri yok.' };
   }
@@ -63,7 +58,7 @@ export async function urunImportAction(veriler) {
 
   for (let i = 0; i < veriler.length; i++) {
     const satir = veriler[i];
-    const sira = i + 2; // Excel'de başlık 1. satır
+    const sira = i + 2;
 
     const urun_adi = String(satir['Ürün Adı'] ?? '').trim();
     if (!urun_adi) {
@@ -73,9 +68,7 @@ export async function urunImportAction(veriler) {
 
     const tip = String(satir['Tip'] ?? 'hammadde').toLowerCase().trim();
     if (!['hammadde', 'satis_urunu'].includes(tip)) {
-      hatalar.push(
-        `${sira}. satır: Tip "${tip}" geçersiz (hammadde / satis_urunu)`
-      );
+      hatalar.push(`${sira}. satır: Tip "${tip}" geçersiz (hammadde / satis_urunu)`);
       continue;
     }
 
@@ -117,7 +110,6 @@ export async function urunImportAction(veriler) {
 export async function cariSablonAction() {
   try {
     const XLSX = await import('xlsx');
-
     const ornek = [
       {
         'Ünvan': 'Örnek Market',
@@ -130,28 +122,15 @@ export async function cariSablonAction() {
         'E-posta': 'info@ornek.com',
       },
     ];
-
     const ws = XLSX.utils.json_to_sheet(ornek);
     ws['!cols'] = [
-      { wch: 30 },
-      { wch: 12 },
-      { wch: 18 },
-      { wch: 30 },
-      { wch: 15 },
-      { wch: 15 },
-      { wch: 20 },
-      { wch: 25 },
+      { wch: 30 }, { wch: 12 }, { wch: 18 }, { wch: 30 },
+      { wch: 15 }, { wch: 15 }, { wch: 20 }, { wch: 25 },
     ];
-
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Cariler');
-
     const buf = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
-    return {
-      ok: true,
-      icerik: buf.toString('base64'),
-      dosya: 'cari_sablonu.xlsx',
-    };
+    return { ok: true, icerik: buf.toString('base64'), dosya: 'cari_sablonu.xlsx' };
   } catch (err) {
     console.error('cariSablon:', err);
     return { error: 'Şablon oluşturulamadı.' };
@@ -159,7 +138,14 @@ export async function cariSablonAction() {
 }
 
 // ==================== CARİ IMPORT ====================
-export async function cariImportAction(veriler) {
+export async function cariImportAction(verilerJson) {
+  let veriler;
+  try {
+    veriler = JSON.parse(verilerJson);
+  } catch {
+    return { error: 'Veri okunamadı.' };
+  }
+
   if (!Array.isArray(veriler) || !veriler.length) {
     return { error: 'Yüklenecek veri yok.' };
   }
@@ -179,9 +165,7 @@ export async function cariImportAction(veriler) {
 
     const tip = String(satir['Tip'] ?? 'musteri').toLowerCase().trim();
     if (!['tedarikci', 'musteri', 'her_ikisi'].includes(tip)) {
-      hatalar.push(
-        `${sira}. satır: Tip "${tip}" geçersiz (tedarikci / musteri / her_ikisi)`
-      );
+      hatalar.push(`${sira}. satır: Tip "${tip}" geçersiz (tedarikci / musteri / her_ikisi)`);
       continue;
     }
 

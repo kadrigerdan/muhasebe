@@ -18,6 +18,7 @@ const adminLinkler = [
   { href: '/mutfak', label: '🍳 Mutfak' },
   { href: '/yedekleme', label: '💾 Yedekleme' },
   { href: '/ayarlar', label: '⚙️ Ayarlar' },
+  { href: '/import', label: '📤 Import' },
 ];
 
 // Personel sadece bunları görür
@@ -46,9 +47,8 @@ export default function Nav({ kullanici }) {
               <Link
                 key={l.href}
                 href={l.href}
-                className={`py-2 px-3 rounded text-sm transition ${
-                  aktif ? 'bg-blue-600 text-white' : 'hover:bg-slate-200'
-                }`}
+                className={`py-2 px-3 rounded text-sm transition ${aktif ? 'bg-blue-600 text-white' : 'hover:bg-slate-200'
+                  }`}
               >
                 {l.label}
               </Link>
@@ -62,11 +62,10 @@ export default function Nav({ kullanici }) {
                 <Link
                   key={l.href}
                   href={l.href}
-                  className={`py-2 px-3 rounded text-sm transition ${
-                    aktif
+                  className={`py-2 px-3 rounded text-sm transition ${aktif
                       ? 'bg-purple-600 text-white'
                       : 'hover:bg-purple-100 text-purple-700'
-                  }`}
+                    }`}
                 >
                   {l.label}
                 </Link>
