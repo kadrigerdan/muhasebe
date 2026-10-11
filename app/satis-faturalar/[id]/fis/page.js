@@ -5,7 +5,7 @@ import FisYazdirButonu from '@/components/restoran/FisYazdirButonu';
 
 export const dynamic = 'force-dynamic';
 
-const GENISLIK = 36;
+const GENISLIK = 32;
 
 function kisalt(str, max = GENISLIK) {
   if (!str) return '';
@@ -132,8 +132,8 @@ export default async function SatisFaturaFisPage({ params }) {
                 box-shadow: none !important;
                 border: none !important;
                 border-radius: 0 !important;
-                font-size: 9.5px !important;
-                letter-spacing: -0.1px !important;
+                font-size: 9px !important;
+                letter-spacing: -0.15px !important;
                 overflow: hidden !important;
               }
               .print-hide { display: none !important; }
@@ -154,7 +154,7 @@ export default async function SatisFaturaFisPage({ params }) {
         </div>
 
         <div className="p-4 flex justify-center">
-          <div className="fis-kagidi bg-white shadow-lg border rounded w-[340px] p-4">
+          <div className="fis-kagidi bg-white shadow-lg border rounded w-80 p-4">
             {satirlar.map((s, i) => (
               <div key={i}>{s}</div>
             ))}

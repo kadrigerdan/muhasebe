@@ -43,3 +43,6 @@ next-env.d.ts
 # Public'e yanlışlıkla indirilen dosyalar
 public/*.xlsx
 public/*.csv
+
+# Yedek dosyaları (çok büyür, Git'e girmesin)
+database/backups/
