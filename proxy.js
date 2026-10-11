@@ -9,7 +9,7 @@ const COOKIE_ADI = 'oturum';
 const ACIK_SAYFALAR = ['/giris', '/cikis'];
 
 // Personel sadece bu sayfalara erişebilir
-const PERSONEL_SAYFALAR = ['/', '/restoran', '/mutfak', '/profil'];
+const PERSONEL_SAYFALAR = ['/restoran', '/mutfak', '/profil'];
 
 export async function proxy(request) {
   const { pathname } = request.nextUrl;
@@ -53,8 +53,9 @@ export async function proxy(request) {
 
   // Personel yetki kontrolü
   if (oturum && oturum.rol === 'personel') {
+    // Ana sayfa dahil izinli olmayan her şey → /restoran
     const izinliMi = PERSONEL_SAYFALAR.some(
-      (p) => pathname === p || (p !== '/' && pathname.startsWith(p))
+      (p) => pathname === p || pathname.startsWith(p + '/')
     );
     if (!izinliMi) {
       const url = request.nextUrl.clone();

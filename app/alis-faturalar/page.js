@@ -2,6 +2,8 @@ import Link from 'next/link';
 import { tumAlisFaturalar, alisMaliOzet } from '@/models/alisFaturaModel';
 import AlisFaturaList from '@/components/alis-fatura/AlisFaturaList';
 import { paraFormat } from '@/lib/format';
+import ExcelIndirButton from '@/components/ExcelIndirButton';
+import { alisFaturalariExcelAction } from '@/actions/excelActions';
 
 export const dynamic = 'force-dynamic';
 
@@ -15,6 +17,9 @@ export default async function AlisFaturaListPage() {
         <div className="p-6 max-w-6xl mx-auto space-y-6">
             <div className="flex items-center justify-between">
                 <h1 className="text-2xl font-bold">Alış Faturaları</h1>
+                <ExcelIndirButton action={alisFaturalariExcelAction}>
+                    📊 Excel İndir
+                </ExcelIndirButton>
                 <Link
                     href="/alis-faturalar/yeni"
                     className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"

@@ -2,6 +2,8 @@ import Link from 'next/link';
 import { tumSatisFaturalar, satisMaliOzet } from '@/models/satisFaturaModel';
 import SatisFaturaList from '@/components/satis-fatura/SatisFaturaList';
 import { paraFormat } from '@/lib/format';
+import ExcelIndirButton from '@/components/ExcelIndirButton';
+import { satisFaturalariExcelAction } from '@/actions/excelActions';
 
 export const dynamic = 'force-dynamic';
 
@@ -15,6 +17,9 @@ export default async function SatisFaturaListPage() {
         <div className="p-6 max-w-6xl mx-auto space-y-6">
             <div className="flex items-center justify-between">
                 <h1 className="text-2xl font-bold">Satış Faturaları</h1>
+                <ExcelIndirButton action={satisFaturalariExcelAction}>
+                    📊 Excel İndir
+                </ExcelIndirButton>
                 <Link
                     href="/satis-faturalar/yeni"
                     className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"

@@ -13,6 +13,8 @@ export async function girisAction(prevState, formData) {
   if (!kullanici_adi) return { error: 'Kullanıcı adı zorunludur.' };
   if (!sifre) return { error: 'Şifre zorunludur.' };
 
+  let rol = null;
+
   try {
     const rows = await query(
       'SELECT id, kullanici_adi, sifre_hash, ad_soyad, rol, aktif FROM kullanicilar WHERE kullanici_adi = ?',
@@ -34,6 +36,8 @@ export async function girisAction(prevState, formData) {
       return { error: 'Kullanıcı adı veya şifre hatalı.' };
     }
 
+    rol = kullanici.rol;
+
     await oturumKaydet({
       id: Number(kullanici.id),
       kullanici_adi: kullanici.kullanici_adi,
@@ -45,7 +49,13 @@ export async function girisAction(prevState, formData) {
     return { error: 'Giriş yapılamadı.' };
   }
 
-  redirect(donus);
+  // Personel → her zaman /restoran
+  if (rol === 'personel') {
+    redirect('/restoran');
+  }
+
+  // Admin → donus varsa orası, yoksa ana sayfa
+  redirect(donus === '/' ? '/' : donus);
 }
 
 export async function cikisAction() {
