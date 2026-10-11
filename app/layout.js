@@ -1,5 +1,5 @@
 import './globals.css';
-import Nav from '@/components/Nav';
+import NavWrapper from '@/components/NavWrapper';
 import { oturumAl } from '@/lib/auth';
 
 export const metadata = {
@@ -13,7 +13,7 @@ export default async function RootLayout({ children }) {
   return (
     <html lang="tr" suppressHydrationWarning>
       <body className="bg-gray-50 min-h-screen">
-        {oturum && <Nav kullanici={oturum} />}
+        {oturum && <NavWrapper kullanici={oturum} />}
         <main>{children}</main>
       </body>
     </html>

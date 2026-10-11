@@ -3,13 +3,15 @@ import { query } from '@/database/db';
 import { kasaTipOzet, kasaOzet } from '@/models/kasaModel';
 import { paraFormat, sayiFormat } from '@/lib/format';
 import { adisyonOzet } from '@/models/adisyonModel';
+import { tumBildirimler } from '@/models/bildirimModel';
+import Bildirimler from '@/components/Bildirimler';
 
 export const dynamic = 'force-dynamic';
 
 export default async function AnaSayfa() {
   const [
     cariArr, urunArr, personelArr, stokArr, kritikArr, tukenenArr,
-    alisArr, satisArr, kasaTip, kasaGenel, restoranOzet,
+    alisArr, satisArr, kasaTip, kasaGenel, restoranOzet, bildirimData,
   ] = await Promise.all([
     query('SELECT COUNT(*) AS toplam FROM cariler WHERE aktif = 1'),
     query('SELECT COUNT(*) AS toplam FROM urunler WHERE durum = 1'),
@@ -22,6 +24,7 @@ export default async function AnaSayfa() {
     kasaTipOzet(),
     kasaOzet(),
     adisyonOzet(),
+    tumBildirimler(),
   ]);
 
   const cariSayi = cariArr[0];
@@ -38,7 +41,7 @@ export default async function AnaSayfa() {
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6">
       <h1 className="text-3xl font-bold">Muhasebe Paneli</h1>
-
+      <Bildirimler bildirimler={bildirimData} />
       {/* KASA DURUMU */}
       <div>
         <div className="p-1.5 bg-white">Kasa Durumu</div>
