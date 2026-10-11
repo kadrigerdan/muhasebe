@@ -37,7 +37,6 @@ export default async function MutfakPage() {
 
   return (
     <div className="p-3 sm:p-6 max-w-6xl mx-auto space-y-4 sm:space-y-6">
-      {/* Başlık */}
       <div className="flex items-start justify-between gap-3 flex-wrap">
         <div>
           <h1 className="text-xl sm:text-2xl font-bold">🍳 Mutfak Ekranı</h1>
@@ -60,7 +59,6 @@ export default async function MutfakPage() {
         </div>
       </div>
 
-      {/* Özet */}
       <div className="grid grid-cols-3 gap-3 sm:gap-4">
         <div className="border rounded-lg p-3 sm:p-4 bg-orange-50">
           <div className="text-xs text-orange-600 mb-1">Bekleyen</div>
@@ -82,7 +80,6 @@ export default async function MutfakPage() {
         </div>
       </div>
 
-      {/* Bekleyen Siparişler */}
       <div>
         <h2 className="text-base sm:text-lg font-bold mb-3 text-orange-700">
           🔔 Hazırlanacak — {bekleyenMasalar.length} masa
@@ -99,7 +96,6 @@ export default async function MutfakPage() {
         </div>
       </div>
 
-      {/* Hazır Olanlar */}
       {hazirMasalar.length > 0 && (
         <div>
           <h2 className="text-base sm:text-lg font-bold mb-3 text-green-700">

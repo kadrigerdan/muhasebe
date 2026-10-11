@@ -14,12 +14,10 @@ export default async function RestoranPage() {
 
   return (
     <div className="p-3 sm:p-6 max-w-6xl mx-auto space-y-4 sm:space-y-6">
-      {/* Başlık + Özet Şerit + Butonlar */}
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <div className="flex items-center gap-4 flex-wrap">
           <h1 className="text-xl sm:text-2xl font-bold">Restoran — Masalar</h1>
 
-          {/* Özet Şerit */}
           <div className="bg-gray-100 border rounded-lg px-3 py-1.5 flex items-center gap-x-4 gap-y-1 text-xs flex-wrap">
             <div className="flex items-center gap-1.5">
               <span className="w-1.5 h-1.5 bg-red-500 rounded-full"></span>
@@ -67,10 +65,8 @@ export default async function RestoranPage() {
         </div>
       </div>
 
-      {/* Masalar */}
       <MasaGrid masalar={masalar} />
 
-      {/* Renk Açıklama + Mutfak Butonu (alt) */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-3 border-t">
         <div className="flex flex-wrap gap-4 text-sm text-gray-600">
           <div className="flex items-center gap-2">

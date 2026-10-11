@@ -6,9 +6,7 @@ const SECRET = new TextEncoder().encode(
 );
 
 const COOKIE_ADI = 'oturum';
-const ACIK_SAYFALAR = ['/giris', '/cikis'];
-
-// Personel sadece bu sayfalara erişebilir
+const ACIK_SAYFALAR = ['/giris'];
 const PERSONEL_SAYFALAR = ['/restoran', '/mutfak', '/profil'];
 
 export async function proxy(request) {
@@ -20,6 +18,21 @@ export async function proxy(request) {
     pathname.includes('.')
   ) {
     return NextResponse.next();
+  }
+
+  // ⭐ ÇIKIŞ: /cikis isteğini burada yakala, cookie sil, /giris'e at
+  if (pathname === '/cikis') {
+    const url = request.nextUrl.clone();
+    url.pathname = '/giris';
+    const response = NextResponse.redirect(url);
+    response.cookies.set('oturum', '', {
+      path: '/',
+      maxAge: 0,
+      expires: new Date(0),
+      httpOnly: true,
+      sameSite: 'lax',
+    });
+    return response;
   }
 
   const acikMi = ACIK_SAYFALAR.some((p) => pathname.startsWith(p));
@@ -36,7 +49,6 @@ export async function proxy(request) {
     }
   }
 
-  // Giriş yapılmamış + korumalı sayfa
   if (!oturum && !acikMi) {
     const url = request.nextUrl.clone();
     url.pathname = '/giris';
@@ -44,16 +56,13 @@ export async function proxy(request) {
     return NextResponse.redirect(url);
   }
 
-  // Giriş yapılmış + /giris → ana sayfaya
   if (oturum && pathname === '/giris') {
     const url = request.nextUrl.clone();
-    url.pathname = '/';
+    url.pathname = oturum.rol === 'personel' ? '/restoran' : '/';
     return NextResponse.redirect(url);
   }
 
-  // Personel yetki kontrolü
   if (oturum && oturum.rol === 'personel') {
-    // Ana sayfa dahil izinli olmayan her şey → /restoran
     const izinliMi = PERSONEL_SAYFALAR.some(
       (p) => pathname === p || pathname.startsWith(p + '/')
     );

@@ -43,6 +43,12 @@ export default async function SatisFaturaDetayPage({ params }) {
           >
             🖨️ Yazdır / PDF
           </Link>
+          <Link
+            href={`/satis-faturalar/${id}/fis`}
+            className="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700 text-sm"
+          >
+            🧾 Fiş (80mm)
+          </Link>
           <Link href="/satis-faturalar" className="text-blue-600 hover:underline self-center">
             ← Faturalar
           </Link>
