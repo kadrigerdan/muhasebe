@@ -59,7 +59,7 @@ export default async function MutfakPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-3 sm:gap-4">
+      <div className="grid grid-cols-1 gap-3 sm:gap-4">
         <div className="border rounded-lg p-3 sm:p-4 bg-orange-50">
           <div className="text-xs text-orange-600 mb-1">Bekleyen</div>
           <div className="text-2xl sm:text-3xl font-bold text-orange-700">
@@ -89,7 +89,7 @@ export default async function MutfakPage() {
             Bekleyen sipariş yok. 👍
           </div>
         )}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+        <div className="space-y-3">
           {bekleyenMasalar.map((m) => (
             <MutfakMasaKart key={String(m.adisyon_id)} masa={m} />
           ))}
@@ -101,7 +101,7 @@ export default async function MutfakPage() {
           <h2 className="text-base sm:text-lg font-bold mb-3 text-green-700">
             ✅ Hazır — {hazirMasalar.length} masa
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+          <div className="space-y-3">
             {hazirMasalar.map((m) => (
               <MutfakMasaKart key={String(m.adisyon_id)} masa={m} />
             ))}

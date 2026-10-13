@@ -184,19 +184,16 @@ Aç: **http://localhost:3000**
 ### Dashboard
 ![Dashboard](screenshots/dashboard.png)
 
-### Restoran — Masalar
-![Masalar](screenshots/restoran.png)
+### Satış Faturası
+![Fatura](screenshots/fatura.png)
 
 ### Mutfak Ekranı
 ![Mutfak](screenshots/mutfak.png)
 
-### Alış Faturası
-![Fatura](screenshots/fatura.png)
+### Restoran — Masalar
+![Masalar](screenshots/restoran.png)
 
-### Kâr/Zarar Raporu
-![Rapor](screenshots/rapor.png)
 
----
 
 ## 💡 Kullanım Senaryoları
 
