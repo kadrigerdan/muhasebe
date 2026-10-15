@@ -816,7 +816,7 @@ CREATE TABLE `satis_fatura_detaylari` (
   KEY `idx_satis_detay_urun` (`urun_id`),
   CONSTRAINT `fk_satis_detay_fatura` FOREIGN KEY (`fatura_id`) REFERENCES `satis_faturalar` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `fk_satis_detay_urun` FOREIGN KEY (`urun_id`) REFERENCES `urunler` (`id`) ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=41 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=46 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -863,7 +863,12 @@ INSERT INTO `satis_fatura_detaylari` VALUES
 (37,65,27,25.50,3),
 (38,66,15,70.00,1),
 (39,67,55,950.00,1),
-(40,67,61,0.00,8);
+(40,67,61,0.00,8),
+(41,68,56,980.00,1),
+(42,68,64,8.00,1),
+(43,68,4,300.00,1),
+(44,68,55,950.00,1),
+(45,68,56,980.00,1);
 /*!40000 ALTER TABLE `satis_fatura_detaylari` ENABLE KEYS */;
 UNLOCK TABLES;
 COMMIT;
@@ -886,7 +891,7 @@ CREATE TABLE `satis_faturalar` (
   PRIMARY KEY (`id`),
   KEY `fk_satis_cari` (`cari_id`),
   CONSTRAINT `fk_satis_cari` FOREIGN KEY (`cari_id`) REFERENCES `cariler` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=68 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=69 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -922,7 +927,8 @@ INSERT INTO `satis_faturalar` VALUES
 (63,2,'2026-10-04',280.00,'odendi','2026-10-04 10:05:18'),
 (65,2,'2026-10-05',76.50,'odendi','2026-10-05 13:01:19'),
 (66,3,'2026-10-05',70.00,'odendi','2026-10-05 14:03:48'),
-(67,2,'2026-10-11',950.00,'odendi','2026-10-11 16:14:10');
+(67,2,'2026-10-11',950.00,'odendi','2026-10-11 16:14:10'),
+(68,3,'2026-10-13',0.00,'odenmedi','2026-10-13 16:36:19');
 /*!40000 ALTER TABLE `satis_faturalar` ENABLE KEYS */;
 UNLOCK TABLES;
 COMMIT;
@@ -949,7 +955,7 @@ CREATE TABLE `stok_hareketleri` (
   KEY `idx_urun` (`urun_id`),
   KEY `idx_tarih` (`tarih`),
   CONSTRAINT `1` FOREIGN KEY (`urun_id`) REFERENCES `urunler` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=171 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=176 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1128,7 +1134,12 @@ INSERT INTO `stok_hareketleri` VALUES
 (167,28,'cikis',1,'Masa satışı #51','satis_fatura',51,'2026-10-11','2026-10-11 18:29:00'),
 (168,53,'cikis',1,'Masa satışı #52','satis_fatura',52,'2026-10-12','2026-10-11 21:01:25'),
 (169,43,'cikis',1,'Masa satışı #52','satis_fatura',52,'2026-10-12','2026-10-11 21:01:25'),
-(170,51,'cikis',1,'Masa satışı #52','satis_fatura',52,'2026-10-12','2026-10-11 21:01:25');
+(170,51,'cikis',1,'Masa satışı #52','satis_fatura',52,'2026-10-12','2026-10-11 21:01:25'),
+(171,56,'cikis',1,'Satış faturası #68','satis_fatura',68,'2026-10-13','2026-10-13 16:36:19'),
+(172,64,'cikis',1,'Satış faturası #68','satis_fatura',68,'2026-10-13','2026-10-13 16:36:19'),
+(173,4,'cikis',1,'Satış faturası #68','satis_fatura',68,'2026-10-13','2026-10-13 16:36:19'),
+(174,55,'cikis',1,'Satış faturası #68','satis_fatura',68,'2026-10-13','2026-10-13 16:36:19'),
+(175,56,'cikis',1,'Satış faturası #68','satis_fatura',68,'2026-10-13','2026-10-13 16:36:19');
 /*!40000 ALTER TABLE `stok_hareketleri` ENABLE KEYS */;
 UNLOCK TABLES;
 COMMIT;
@@ -1198,7 +1209,7 @@ LOCK TABLES `urunler` WRITE;
 INSERT INTO `urunler` VALUES
 (1,'12kg Mutfak Tüp','hammadde',10,200.00,300.00,1,51,'2026-09-02 19:30:43'),
 (2,'2kg Piknik Tüp','hammadde',10,10.00,15.00,1,30,'2026-09-02 19:38:05'),
-(4,'24kg Ticari Tüp','hammadde',10,200.00,300.00,1,12,'2026-09-02 19:52:36'),
+(4,'24kg Ticari Tüp','hammadde',10,200.00,300.00,1,11,'2026-09-02 19:52:36'),
 (5,'45kg Sanayi Tüp','hammadde',10,500.00,700.00,1,15,'2026-09-02 22:17:54'),
 (6,'Kaynak Su Damacana','hammadde',10,20.00,30.00,1,20,'2026-09-03 13:55:22'),
 (7,'Piknik Süzgeç','hammadde',10,5.00,10.00,1,30,'2026-09-03 14:36:30'),
@@ -1241,8 +1252,8 @@ INSERT INTO `urunler` VALUES
 (52,'Su','satis_urunu',0,2.00,10.00,1,-7,NULL),
 (53,'Çoban Salata','satis_urunu',0,20.00,60.00,1,-10,NULL),
 (54,'Tatlı','satis_urunu',0,30.00,80.00,1,-3,NULL),
-(55,'Dana Kıyma (kg)','hammadde',5,700.00,950.00,1,14,NULL),
-(56,'Dana Kuşbaşı (kg)','hammadde',5,700.00,980.00,1,28,NULL),
+(55,'Dana Kıyma (kg)','hammadde',5,700.00,950.00,1,13,NULL),
+(56,'Dana Kuşbaşı (kg)','hammadde',5,700.00,980.00,1,26,NULL),
 (57,'Kuzu Eti (kg)','hammadde',5,750.00,950.00,1,23,NULL),
 (58,'Tavuk (kg)','hammadde',5,100.00,150.00,1,34,NULL),
 (59,'Kuyruk Yağı (kg)','hammadde',2,300.00,500.00,1,27,NULL),
@@ -1250,7 +1261,7 @@ INSERT INTO `urunler` VALUES
 (61,'Test Kıyma','hammadde',5,400.00,0.00,1,23,NULL),
 (62,'Örnek Kalem','hammadde',10,5.00,10.00,1,100,NULL),
 (63,'Örnek Defter','satis_urunu',5,20.00,40.00,1,50,NULL),
-(64,'Çivi','satis_urunu',10,5.00,8.00,1,100,NULL),
+(64,'Çivi','satis_urunu',10,5.00,8.00,1,99,NULL),
 (65,'Vida','satis_urunu',10,10.00,15.00,1,100,NULL);
 /*!40000 ALTER TABLE `urunler` ENABLE KEYS */;
 UNLOCK TABLES;
@@ -1284,4 +1295,4 @@ SET AUTOCOMMIT=@OLD_AUTOCOMMIT;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*M!100616 SET NOTE_VERBOSITY=@OLD_NOTE_VERBOSITY */;
 
--- Dump completed on 2026-10-12  0:59:06
+-- Dump completed on 2026-10-15 14:57:00

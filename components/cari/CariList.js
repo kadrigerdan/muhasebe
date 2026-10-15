@@ -9,6 +9,7 @@ export default function CariList({ cariler }) {
           <th className="border p-2 text-left">Ünvan</th>
           <th className="border p-2 text-center">Tip</th>
           <th className="border p-2 text-left">Telefon</th>
+          <th className="border p-2 text-left">Adres</th>
           <th className="border p-2 text-right">Borç</th>
           <th className="border p-2 text-right">Alacak</th>
           <th className="border p-2 text-right">Bakiye</th>
@@ -46,6 +47,7 @@ export default function CariList({ cariler }) {
                 )}
               </td>
               <td className="border p-2">{c.telefon ?? '-'}</td>
+              <td className="border p-2">{c.adres ?? '-'}</td>
               <td className="border p-2 text-right">
                 {paraFormat(c.toplam_borc)} ₺
               </td>

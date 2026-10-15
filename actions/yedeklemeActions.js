@@ -1,9 +1,9 @@
 'use server';
 
+import path from 'path';
 import { exec } from 'child_process';
 import { promisify } from 'util';
 import fs from 'fs/promises';
-import path from 'path';
 import { revalidatePath } from 'next/cache';
 
 const execAsync = promisify(exec);
@@ -14,6 +14,29 @@ async function klasorGarantile() {
     try {
         await fs.mkdir(BACKUP_DIR, { recursive: true });
     } catch { }
+}
+
+// Son N yedeği tut, gerisini sil
+async function eskiYedekleriTemizle(silinecekOncesi = 7) {
+    try {
+        const dosyalar = await fs.readdir(BACKUP_DIR);
+        const yedekler = dosyalar
+            .filter(f => f.startsWith('muhasebe_tam_') && f.endsWith('.tar.gz'))
+            .sort()          // tarih damgası sıralanabilir formatta (YYYYMMDDHHMMSS)
+            .reverse();      // en yeni başta
+
+        const silinecekler = yedekler.slice(silinecekOncesi);
+        for (const eski of silinecekler) {
+            try {
+                await fs.unlink(path.join(BACKUP_DIR, eski));
+                console.log('Eski yedek silindi:', eski);
+            } catch (err) {
+                console.warn('Silinemedi:', eski, err.message);
+            }
+        }
+    } catch (err) {
+        console.warn('Temizlik hatası:', err.message);
+    }
 }
 
 // ==================== SADECE DB ====================
@@ -92,6 +115,7 @@ export async function yedekIcerikAction(dosyaAdi) {
 // ==================== TAM YEDEK (DB + KOD) ====================
 export async function tamYedekAlAction() {
     await klasorGarantile();
+
     const damga = new Date().toISOString().replace(/[-:T.Z]/g, '').slice(0, 14);
     const sqlAdi = `muhasebe_${damga}.sql`;
     const sqlKokYol = path.join(process.cwd(), sqlAdi);
@@ -104,7 +128,7 @@ export async function tamYedekAlAction() {
     const pass = process.env.DB_PASSWORD;
     const db = process.env.DB_DATABASE;
 
-    // 1) SQL dump → kök dizine yaz (tar oradan alacak)
+    // 1) SQL dump
     const dumpCmd = `(mariadb-dump -h ${host} -P ${port} -u ${user} -p'${pass}' ${db} > "${sqlKokYol}") 2>&1 || (mysqldump -h ${host} -P ${port} -u ${user} -p'${pass}' ${db} > "${sqlKokYol}")`;
 
     try {
@@ -120,38 +144,42 @@ export async function tamYedekAlAction() {
     // 2) tar.gz oluştur
     const kokDizin = process.cwd();
     const adaylar = [
-        sqlAdi,                       // ← SQL kök dizinde, doğrudan ekle
+        sqlAdi,
         'database/migrations',
-        'app',
-        'components',
-        'models',
-        'actions',
-        'modals',
-        'lib',
-        'public',
-        'package.json',
-        'yarn.lock',
-        'next.config.js',
-        'next.config.mjs',
-        'jsconfig.json',
-        '.env.local',
+        'actions', 'app', 'components', 'lib', 'modals', 'models',
+        'public', 'screenshots', 'scripts',
+        '.env.local', '.gitignore', '.eslintconfig.mjs',
+        'AGENTS.md', 'CLAUDE.md',
+        'jsconfig.json', 'next.config.mjs', 'next.config.js',
+        'package.json', 'yarn.lock',
     ];
 
-    const mevcut = [];
-    for (const a of adaylar) {
-        const tam = path.join(kokDizin, a);
-        try {
-            await fs.access(tam);
-            mevcut.push(a);
-        } catch { }
+    // Var olanları filtrele
+    const { existsSync } = await import('fs');
+    const mevcut = adaylar.filter(a => existsSync(path.join(kokDizin, a)));
+
+    if (mevcut.length === 0) {
+        try { await fs.unlink(sqlKokYol); } catch { }
+        return { error: 'Yedeklenecek dosya bulunamadı.' };
     }
 
-    const tarCmd = `tar -czf "${tarYol}" -C "${kokDizin}" ${mevcut.map((m) => `"${m}"`).join(' ')}`;
+    const args = [
+        '-czf', tarYol,
+        '-C', kokDizin,
+        '--exclude=node_modules',
+        '--exclude=.next',
+        '--exclude=.git',
+        '--exclude=database/backups',
+        ...mevcut,
+    ];
 
     try {
-        await execAsync(tarCmd, { maxBuffer: 200 * 1024 * 1024 });
-        // SQL'i sil (tar içinde var)
+        const { execFileSync } = await import('child_process');
+        execFileSync('tar', args, { stdio: 'inherit' });
+
+        // SQL'i sil (arşivin içinde)
         try { await fs.unlink(sqlKokYol); } catch { }
+
         const stat = await fs.stat(tarYol);
         revalidatePath('/yedekleme');
         return { ok: true, dosya: tarAdi, boyut: stat.size };

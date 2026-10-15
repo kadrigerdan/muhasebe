@@ -145,7 +145,7 @@ export async function cariEkstre(cariId) {
 export async function cariBakiyeListesi() {
     return await query(
         `SELECT
-       c.id, c.unvan, c.tip, c.telefon,
+       c.id, c.unvan, c.tip, c.telefon,c.adres,
        COALESCE(s.fatura_toplam, 0) - COALESCE(s.tahsilat, 0) AS toplam_borc,
        COALESCE(a.fatura_toplam, 0) - COALESCE(a.odeme, 0)    AS toplam_alacak,
        (COALESCE(s.fatura_toplam, 0) - COALESCE(s.tahsilat, 0))
