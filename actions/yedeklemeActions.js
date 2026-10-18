@@ -24,14 +24,22 @@ async function eskiYedekleriTemizle(silinecekOncesi = TUTULACAK_YEDEK_SAYISI) {
 
         const gruplar = {
             tam: dosyalar.filter(f => f.startsWith('muhasebe_tam_') && f.endsWith('.tar.gz')),
-            manuel: dosyalar.filter(f => f.startsWith('muhasebe_') && !f.startsWith('muhasebe_tam_') && !f.startsWith('muhasebe_oto_') && f.endsWith('.sql')),
+            geriyukleme: dosyalar.filter(f => f.startsWith('muhasebe_geriyukleme_oncesi_') && f.endsWith('.sql')),
+            manuel: dosyalar.filter(f =>
+                f.startsWith('muhasebe_') &&
+                !f.startsWith('muhasebe_tam_') &&
+                !f.startsWith('muhasebe_oto_') &&
+                !f.startsWith('muhasebe_geriyukleme_oncesi_') &&
+                f.endsWith('.sql')
+            ),
             oto: dosyalar.filter(f => f.startsWith('muhasebe_oto_') && f.endsWith('.sql')),
         };
 
         const limitler = {
-            tam: silinecekOncesi,
-            manuel: silinecekOncesi,
-            oto: 3,
+            tam: silinecekOncesi,   // 7
+            geriyukleme: 2,                 // sadece son 2
+            manuel: silinecekOncesi,   // 7
+            oto: 3,                 // sadece son 3
         };
 
         for (const [grup, liste] of Object.entries(gruplar)) {
@@ -141,53 +149,39 @@ export async function tamYedekAlAction() {
     const pass = process.env.DB_PASSWORD;
     const db = process.env.DB_DATABASE;
 
-    const dumpCmd = `(mariadb-dump -h ${host} -P ${port} -u ${user} -p'${pass}' ${db} > "${sqlKokYol}") 2>&1 || (mysqldump -h ${host} -P ${port} -u ${user} -p'${pass}' ${db} > "${sqlKokYol}")`;
-
     try {
+        // 1) SQL dump
+        const dumpCmd = `(mariadb-dump -h ${host} -P ${port} -u ${user} -p'${pass}' ${db} > "${sqlKokYol}") 2>&1 || (mysqldump -h ${host} -P ${port} -u ${user} -p'${pass}' ${db} > "${sqlKokYol}")`;
+
         await execAsync(dumpCmd, { maxBuffer: 200 * 1024 * 1024 });
-        const stat = await fs.stat(sqlKokYol);
-        if (stat.size === 0) throw new Error('SQL dump boş.');
-    } catch (err) {
-        console.error('sqlDump:', err);
-        try { await fs.unlink(sqlKokYol); } catch { }
-        return { error: 'SQL yedek alınamadı: ' + (err.message || '') };
-    }
+        const statSql = await fs.stat(sqlKokYol);
+        if (statSql.size === 0) throw new Error('SQL dump boş.');
 
-    const kokDizin = process.cwd();
-    const adaylar = [
-        sqlAdi,
-        'database/migrations',
-        'actions', 'app', 'components', 'lib', 'modals', 'models',
-        'public', 'screenshots', 'scripts',
-        '.env.local', '.gitignore', '.eslintconfig.mjs',
-        'AGENTS.md', 'CLAUDE.md',
-        'jsconfig.json', 'next.config.mjs', 'next.config.js',
-        'package.json', 'yarn.lock',
-    ];
+        // 2) tar
+        const kokDizin = process.cwd();
+        const adaylar = [
+            sqlAdi, 'database/migrations',
+            'actions', 'app', 'components', 'lib', 'modals', 'models',
+            'public', 'screenshots', 'scripts',
+            '.env.local', '.gitignore', '.eslintconfig.mjs',
+            'AGENTS.md', 'CLAUDE.md',
+            'jsconfig.json', 'next.config.mjs', 'next.config.js',
+            'package.json', 'yarn.lock',
+        ];
+        const { existsSync } = await import('fs');
+        const mevcut = adaylar.filter(a => existsSync(path.join(kokDizin, a)));
 
-    const { existsSync } = await import('fs');
-    const mevcut = adaylar.filter(a => existsSync(path.join(kokDizin, a)));
+        if (mevcut.length === 0) throw new Error('Yedeklenecek dosya bulunamadı.');
 
-    if (mevcut.length === 0) {
-        try { await fs.unlink(sqlKokYol); } catch { }
-        return { error: 'Yedeklenecek dosya bulunamadı.' };
-    }
+        const args = [
+            '-czf', tarYol, '-C', kokDizin,
+            '--exclude=node_modules', '--exclude=.next', '--exclude=.git',
+            '--exclude=database/backups',
+            ...mevcut,
+        ];
 
-    const args = [
-        '-czf', tarYol,
-        '-C', kokDizin,
-        '--exclude=node_modules',
-        '--exclude=.next',
-        '--exclude=.git',
-        '--exclude=database/backups',
-        ...mevcut,
-    ];
-
-    try {
         const { execFileSync } = await import('child_process');
         execFileSync('tar', args, { stdio: 'inherit' });
-
-        try { await fs.unlink(sqlKokYol); } catch { }
 
         await eskiYedekleriTemizle();
 
@@ -195,9 +189,11 @@ export async function tamYedekAlAction() {
         revalidatePath('/yedekleme');
         return { ok: true, dosya: tarAdi, boyut: stat.size };
     } catch (err) {
-        console.error('tar:', err);
+        console.error('tamYedek:', err);
+        return { error: 'Yedek alınamadı: ' + (err.message || '') };
+    } finally {
+        // HER KOŞULDA SQL dosyasını sil
         try { await fs.unlink(sqlKokYol); } catch { }
-        return { error: 'Arşiv oluşturulamadı: ' + (err.message || '') };
     }
 }
 

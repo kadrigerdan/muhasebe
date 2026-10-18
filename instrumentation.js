@@ -2,6 +2,8 @@
 // Burada SADECE Node.js runtime kontrolü yapılır
 // Ağır işler lib/scheduler.js'e taşındı
 
+export const runtime = 'nodejs';
+
 export async function register() {
   // Edge Runtime'da hiçbir şey yapma
   if (process.env.NEXT_RUNTIME !== 'nodejs') return;
