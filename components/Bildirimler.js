@@ -22,14 +22,12 @@ export default function Bildirimler({ bildirimler }) {
 
   if (toplamUyari === 0) {
     return (
-      <div className="border-2 border-green-300 rounded-lg p-4 bg-green-50">
+      <div className="border-2 border-green-300 rounded-lg bg-green-50">
         <div className="flex items-center gap-2">
           <span className="text-2xl">✅</span>
           <div>
-            <div className="font-bold text-green-800">Her şey yolunda</div>
-            <div className="text-sm text-green-600">
-              Şu an bekleyen bir uyarı yok.
-            </div>
+            <div className="font-bold text-green-800">Her şey yolunda - Şu an bekleyen bir uyarı yok.</div>
+
           </div>
         </div>
       </div>

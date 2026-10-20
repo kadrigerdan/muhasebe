@@ -31,6 +31,12 @@ const yoneticiLinkleri = [
   { href: '/kullanicilar', label: '👤 Kullanıcılar' },
 ];
 
+// "🍽️ Restoran" -> { icon: '🍽️', text: 'Restoran' }
+function ikonAyir(label) {
+  const [ilk, ...kalan] = label.split(' ');
+  return { icon: ilk, text: kalan.join(' ') };
+}
+
 export default function Nav({ kullanici }) {
   const path = usePathname();
 
@@ -39,35 +45,40 @@ export default function Nav({ kullanici }) {
 
   return (
     <nav className="sticky top-0 z-40 border-b bg-white/95 dark:bg-gray-900/95 backdrop-blur">
-      <div className="flex items-center justify-between px-3 py-1">
-        <div className="flex flex-wrap justify-center gap-1 flex-1">
+      <div className="flex items-center justify-between p-1">
+        <div className="flex flex-wrap justify-center gap-3 flex-1">
           {linkler.map((l) => {
-            const aktif = l.href === '/' ? path === '/' : path.startsWith(l.href);
+            const { icon, text } = ikonAyir(l.label);
+            const aktif =
+              l.href === '/' ? path === '/' : path.startsWith(l.href);
             return (
               <Link
                 key={l.href}
                 href={l.href}
-                className={`py-2 px-3 rounded text-sm transition ${aktif ? 'bg-blue-600 text-white' : 'hover:bg-slate-200'
+                className={`flex flex-col items-center gap-0.5 py-1.5 px-2 rounded text-xs leading-tight transition ${aktif ? 'bg-blue-600 text-white' : 'hover:bg-slate-200'
                   }`}
               >
-                {l.label}
+                <span className="text-lg leading-none">{icon}</span>
+                <span>{text}</span>
               </Link>
             );
           })}
 
           {kullanici?.rol === 'admin' &&
             yoneticiLinkleri.map((l) => {
+              const { icon, text } = ikonAyir(l.label);
               const aktif = path.startsWith(l.href);
               return (
                 <Link
                   key={l.href}
                   href={l.href}
-                  className={`py-2 px-3 rounded text-sm transition ${aktif
-                      ? 'bg-purple-600 text-white'
-                      : 'hover:bg-purple-100 text-purple-700'
+                  className={`flex flex-col items-center gap-0.5 py-1.5 px-2 rounded text-xs leading-tight transition ${aktif
+                    ? 'bg-purple-600 text-white'
+                    : 'hover:bg-purple-100 text-purple-700'
                     }`}
                 >
-                  {l.label}
+                  <span className="text-lg leading-none">{icon}</span>
+                  <span>{text}</span>
                 </Link>
               );
             })}
