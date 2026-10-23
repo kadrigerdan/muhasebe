@@ -1,17 +1,23 @@
 import { query, getConnection } from '@/database/db';
 
-export async function tumSatisFaturalar() {
-    return await query(
-        `SELECT f.id, f.tarih, f.odenen_tutar, f.durum,
-            c.unvan AS cari_unvan,
-            COUNT(d.id) AS kalem_sayisi,
-            COALESCE(SUM(d.adet * d.birim_fiyat), 0) AS toplam
-       FROM satis_faturalar f
-       JOIN cariler c ON c.id = f.cari_id
-       LEFT JOIN satis_fatura_detaylari d ON d.fatura_id = f.id
-      GROUP BY f.id, f.tarih, f.odenen_tutar, f.durum, c.unvan
-      ORDER BY f.tarih DESC, f.id DESC`
-    );
+export async function tumSatisFaturalar({ gorunum = 'aktif' } = {}) {
+    const where =
+        gorunum === 'arsiv' ? 'WHERE f.arsivlendi = 1'
+            : gorunum === 'aktif' ? 'WHERE f.arsivlendi = 0'
+                : '';
+
+    return await query(`
+    SELECT f.id, f.tarih, f.odenen_tutar, f.durum, f.arsivlendi,
+           c.unvan AS cari_unvan,
+           COUNT(d.id) AS kalem_sayisi,
+           COALESCE(SUM(d.adet * d.birim_fiyat), 0) AS toplam
+      FROM satis_faturalar f
+      JOIN cariler c ON c.id = f.cari_id
+      LEFT JOIN satis_fatura_detaylari d ON d.fatura_id = f.id
+      ${where}
+     GROUP BY f.id, f.tarih, f.odenen_tutar, f.durum, f.arsivlendi, c.unvan
+     ORDER BY f.tarih DESC, f.id DESC
+  `);
 }
 
 export async function satisFaturaGetir(id) {
@@ -98,49 +104,55 @@ export async function satisFaturaOlustur({ cari_id, tarih, kalemler }) {
     }
 }
 
-export async function satisFaturaSil(id) {
-    const conn = await getConnection();
-    try {
-        await conn.beginTransaction();
+// export async function satisFaturaSil(id) {
+//     const conn = await getConnection();
+//     try {
+//         await conn.beginTransaction();
 
-        const kalemler = await conn.query(
-            'SELECT urun_id, adet FROM satis_fatura_detaylari WHERE fatura_id = ?',
-            [id]
-        );
+//         const kalemler = await conn.query(
+//             'SELECT urun_id, adet FROM satis_fatura_detaylari WHERE fatura_id = ?',
+//             [id]
+//         );
 
-        for (const k of kalemler) {
-            await conn.query(
-                'UPDATE urunler SET stok = stok + ? WHERE id = ?',
-                [k.adet, k.urun_id]
-            );
-        }
+//         for (const k of kalemler) {
+//             await conn.query(
+//                 'UPDATE urunler SET stok = stok + ? WHERE id = ?',
+//                 [k.adet, k.urun_id]
+//             );
+//         }
 
-        await conn.query(
-            "DELETE FROM stok_hareketleri WHERE kaynak = 'satis_fatura' AND kaynak_id = ?",
-            [id]
-        );
-        await conn.query('DELETE FROM satis_fatura_detaylari WHERE fatura_id = ?', [id]);
-        const res = await conn.query('DELETE FROM satis_faturalar WHERE id = ?', [id]);
+//         await conn.query(
+//             "DELETE FROM stok_hareketleri WHERE kaynak = 'satis_fatura' AND kaynak_id = ?",
+//             [id]
+//         );
+//         await conn.query('DELETE FROM satis_fatura_detaylari WHERE fatura_id = ?', [id]);
+//         const res = await conn.query('DELETE FROM satis_faturalar WHERE id = ?', [id]);
 
-        await conn.commit();
-        return Number(res.affectedRows);
-    } catch (err) {
-        await conn.rollback();
-        throw err;
-    } finally {
-        conn.release();
-    }
-}
+//         await conn.commit();
+//         return Number(res.affectedRows);
+//     } catch (err) {
+//         await conn.rollback();
+//         throw err;
+//     } finally {
+//         conn.release();
+//     }
+// }
 
-export async function satisMaliOzet() {
-    const rows = await query(
-        `SELECT
-       COUNT(DISTINCT f.id) AS fatura_sayisi,
-       COALESCE(SUM(d.adet * d.birim_fiyat), 0) AS toplam_tutar,
-       COALESCE(SUM(d.adet), 0) AS toplam_adet
-     FROM satis_faturalar f
-     LEFT JOIN satis_fatura_detaylari d ON d.fatura_id = f.id`
-    );
+export async function satisMaliOzet({ gorunum = 'aktif' } = {}) {
+    const where =
+        gorunum === 'arsiv' ? 'WHERE f.arsivlendi = 1'
+            : gorunum === 'aktif' ? 'WHERE f.arsivlendi = 0'
+                : '';
+
+    const rows = await query(`
+    SELECT
+      COUNT(DISTINCT f.id) AS fatura_sayisi,
+      COALESCE(SUM(d.adet * d.birim_fiyat), 0) AS toplam_tutar,
+      COALESCE(SUM(d.adet), 0) AS toplam_adet
+    FROM satis_faturalar f
+    LEFT JOIN satis_fatura_detaylari d ON d.fatura_id = f.id
+    ${where}
+  `);
     return rows[0];
 }
 
@@ -201,4 +213,16 @@ export async function satisFaturaTahsilatEkle(faturaId, veri) {
     } finally {
         conn.release();
     }
+}
+
+export async function satisFaturaArsivle(id, { neden } = {}) {
+    const res = await query(
+        `UPDATE satis_faturalar
+            SET arsivlendi = 1,
+                arsiv_tarihi = NOW(),
+                arsiv_nedeni = ?
+          WHERE id = ? AND arsivlendi = 0`,
+        [neden ?? null, id]
+    );
+    return Number(res.affectedRows);
 }

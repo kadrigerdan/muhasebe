@@ -1,6 +1,7 @@
 'use server';
 import { revalidatePath } from 'next/cache';
 import { satisFaturaOlustur, satisFaturaSil } from '@/models/satisFaturaModel';
+import { satisFaturaArsivle } from "@/models/satisFaturaModel"
 
 export async function satisFaturaEkleAction(prevState, formData) {
     const cari_id = Number(formData.get('cari_id'));
@@ -44,21 +45,6 @@ export async function satisFaturaEkleAction(prevState, formData) {
     return { ok: true };
 }
 
-export async function satisFaturaSilAction(id) {
-    try {
-        const affected = await satisFaturaSil(Number(id));
-        if (affected === 0) return { error: 'Fatura bulunamadı.' };
-        revalidatePath('/satis-faturalar');
-        revalidatePath('/urunler');
-        revalidatePath('/stok');
-        revalidatePath('/cariler');
-        return { ok: true };
-    } catch (err) {
-        console.error('satisFaturaSil:', err);
-        return { error: 'Fatura silinemedi.' };
-    }
-}
-
 export async function satisFaturaTahsilatAction(prevState, formData) {
     const fatura_id = Number(formData.get('fatura_id'));
     const tutar = Number(formData.get('tutar'));
@@ -86,4 +72,27 @@ export async function satisFaturaTahsilatAction(prevState, formData) {
         return { error: err.message || 'Tahsilat kaydedilemedi.' };
     }
     return { ok: true };
+}
+
+export async function satisFaturaArsivleAction(id, neden = null) {
+    const faturaId = Number(id);
+    if (!Number.isFinite(faturaId) || faturaId <= 0) {
+        return { error: 'Geçersiz fatura.' };
+    }
+
+    try {
+        const affected = await satisFaturaArsivle(faturaId, { neden });
+        if (affected === 0) {
+            return { error: 'Fatura bulunamadı veya zaten arşivlenmiş.' };
+        }
+        revalidatePath('/satis-faturalar');
+        revalidatePath(`/satis-faturalar/${faturaId}`);
+        revalidatePath('/stok');
+        revalidatePath('/cariler');
+        revalidatePath('/kasa');
+        return { ok: true };
+    } catch (err) {
+        console.error('satisFaturaArsivle:', err);
+        return { error: err.message || 'Fatura arşivlenemedi.' };
+    }
 }

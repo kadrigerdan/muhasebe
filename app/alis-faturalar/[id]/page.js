@@ -4,6 +4,9 @@ import { alisFaturaGetir } from '@/models/alisFaturaModel';
 import { aktifKasaHesaplari } from '@/models/kasaModel';
 import OdemeForm from '@/components/alis-fatura/OdemeForm';
 import { paraFormat } from '@/lib/format';
+import ArsivleButonu from '@/components/ArsivleButonu';
+import { alisFaturaArsivleAction } from '@/actions/alisFaturaActions';
+
 
 export const dynamic = 'force-dynamic';
 

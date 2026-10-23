@@ -1,6 +1,9 @@
 'use server';
 import { revalidatePath } from 'next/cache';
-import { alisFaturaOlustur, alisFaturaSil } from '@/models/alisFaturaModel';
+import {
+    alisFaturaOlustur, alisFaturaSil, alisFaturaArsivle,
+    alisFaturaGeriAl,
+} from '@/models/alisFaturaModel';
 
 export async function alisFaturaEkleAction(prevState, formData) {
     const cari_id = Number(formData.get('cari_id'));
@@ -108,3 +111,5 @@ export async function alisFaturaOdemeAction(prevState, formData) {
     }
     return { ok: true };
 }
+
+

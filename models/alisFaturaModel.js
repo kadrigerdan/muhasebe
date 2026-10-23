@@ -1,17 +1,23 @@
 import { query, getConnection } from '@/database/db';
 
-export async function tumAlisFaturalar() {
-    return await query(
-        `SELECT f.id, f.tarih, f.odenen_tutar, f.durum,
-            c.unvan AS cari_unvan,
-            COUNT(d.id) AS kalem_sayisi,
-            COALESCE(SUM(d.miktar * d.birim_fiyat), 0) AS toplam
-       FROM alis_faturalar f
-       JOIN cariler c ON c.id = f.cari_id
-       LEFT JOIN alis_fatura_detaylari d ON d.fatura_id = f.id
-      GROUP BY f.id, f.tarih, f.odenen_tutar, f.durum, c.unvan
-      ORDER BY f.tarih DESC, f.id DESC`
-    );
+export async function tumAlisFaturalar({ gorunum = 'aktif' } = {}) {
+    const where =
+        gorunum === 'arsiv' ? 'WHERE f.arsivlendi = 1'
+            : gorunum === 'aktif' ? 'WHERE f.arsivlendi = 0'
+                : '';
+
+    return await query(`
+        SELECT f.id, f.tarih, f.odenen_tutar, f.durum, f.arsivlendi,
+               c.unvan AS cari_unvan,
+               COUNT(d.id) AS kalem_sayisi,
+               COALESCE(SUM(d.miktar * d.birim_fiyat), 0) AS toplam
+          FROM alis_faturalar f
+          JOIN cariler c ON c.id = f.cari_id
+          LEFT JOIN alis_fatura_detaylari d ON d.fatura_id = f.id
+          ${where}
+         GROUP BY f.id, f.tarih, f.odenen_tutar, f.durum, f.arsivlendi, c.unvan
+         ORDER BY f.tarih DESC, f.id DESC
+    `);
 }
 
 
@@ -90,17 +96,8 @@ export async function alisFaturaSil(id) {
     try {
         await conn.beginTransaction();
 
-        const kalemler = await conn.query(
-            'SELECT urun_id, miktar FROM alis_fatura_detaylari WHERE fatura_id = ?',
-            [id]
-        );
-
-        for (const k of kalemler) {
-            await conn.query(
-                'UPDATE urunler SET stok = stok - ? WHERE id = ?',
-                [k.miktar, k.urun_id]
-            );
-        }
+        // NOT: Silme artık stoğa dokunmuyor.
+        // Stok değişimi sadece iade faturası ile yapılacak.
 
         await conn.query(
             "DELETE FROM stok_hareketleri WHERE kaynak = 'alis_fatura' AND kaynak_id = ?",
@@ -119,14 +116,40 @@ export async function alisFaturaSil(id) {
     }
 }
 
-export async function alisMaliOzet() {
+export async function alisFaturaArsivle(id, { neden } = {}) {
+    const res = await query(
+        `UPDATE alis_faturalar
+            SET arsivlendi = 1, arsiv_tarihi = NOW(), arsiv_nedeni = ?
+          WHERE id = ? AND arsivlendi = 0`,
+        [neden ?? null, id]
+    );
+    return Number(res.affectedRows);
+}
+
+export async function alisFaturaGeriAl(id) {
+    const res = await query(
+        `UPDATE alis_faturalar
+            SET arsivlendi = 0, arsiv_tarihi = NULL, arsiv_nedeni = NULL
+          WHERE id = ? AND arsivlendi = 1`,
+        [id]
+    );
+    return Number(res.affectedRows);
+}
+
+export async function alisMaliOzet({ gorunum = 'aktif' } = {}) {
+    const where =
+        gorunum === 'arsiv' ? 'WHERE f.arsivlendi = 1'
+            : gorunum === 'aktif' ? 'WHERE f.arsivlendi = 0'
+                : ''; // 'tumu' → filtre yok
+
     const rows = await query(
         `SELECT
-       COUNT(DISTINCT f.id) AS fatura_sayisi,
-       COALESCE(SUM(d.miktar * d.birim_fiyat), 0) AS toplam_tutar,
-       COALESCE(SUM(d.miktar), 0) AS toplam_miktar
-     FROM alis_faturalar f
-     LEFT JOIN alis_fatura_detaylari d ON d.fatura_id = f.id`
+           COUNT(DISTINCT f.id) AS fatura_sayisi,
+           COALESCE(SUM(d.miktar * d.birim_fiyat), 0) AS toplam_tutar,
+           COALESCE(SUM(d.miktar), 0) AS toplam_miktar
+         FROM alis_faturalar f
+         LEFT JOIN alis_fatura_detaylari d ON d.fatura_id = f.id
+         ${where}`
     );
     return rows[0];
 }

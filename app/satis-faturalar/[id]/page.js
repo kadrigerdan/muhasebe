@@ -4,6 +4,8 @@ import { satisFaturaGetir } from '@/models/satisFaturaModel';
 import { aktifKasaHesaplari } from '@/models/kasaModel';
 import TahsilatForm from '@/components/satis-fatura/TahsilatForm';
 import { paraFormat } from '@/lib/format';
+import ArsivleButonu from '@/components/ArsivleButonu';
+import { satisFaturaArsivleAction } from '@/actions/satisFaturaActions';
 
 export const dynamic = 'force-dynamic';
 
@@ -34,9 +36,11 @@ export default async function SatisFaturaDetayPage({ params }) {
 
   return (
     <div className="p-6 max-w-4xl mx-auto space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-3 flex-wrap">
         <h1 className="text-2xl font-bold">Satış Faturası #{String(fatura.id)}</h1>
-        <div className="flex gap-2">
+
+        <div className="flex items-center gap-2 flex-wrap">
+          <ArsivleButonu id={fatura.id} action={satisFaturaArsivleAction} />
           <Link
             href={`/satis-faturalar/${id}/yazdir`}
             className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 text-sm"
@@ -49,7 +53,7 @@ export default async function SatisFaturaDetayPage({ params }) {
           >
             🧾 Fiş (80mm)
           </Link>
-          <Link href="/satis-faturalar" className="text-blue-600 hover:underline self-center">
+          <Link href="/satis-faturalar" className="text-blue-600 hover:underline self-center text-sm">
             ← Faturalar
           </Link>
         </div>
@@ -91,11 +95,8 @@ export default async function SatisFaturaDetayPage({ params }) {
               <tr key={String(k.id)}>
                 <td className="border p-2">{k.urun_adi}</td>
                 <td className="border p-2 text-right">{String(k.adet)}</td>
-                <td className="border p-2 text-right">
-                  {paraFormat(k.birim_fiyat)} ₺
-                </td>
-                <td className="border p-2 text-right">{paraFormat(satir)} ₺
-                </td>
+                <td className="border p-2 text-right">{paraFormat(k.birim_fiyat)} ₺</td>
+                <td className="border p-2 text-right">{paraFormat(satir)} ₺</td>
               </tr>
             );
           })}

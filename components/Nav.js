@@ -7,18 +7,18 @@ import { cikisAction } from '@/actions/authActions';
 // Admin her şeyi görür
 const adminLinkler = [
   { href: '/', label: '🏠 Ana Sayfa' },
+  { href: '/kasa', label: '💰 Kasa' },
   { href: '/cariler', label: '📦 Cariler' },
-  { href: '/urunler', label: '🔧 Ürünler' },
   { href: '/alis-faturalar', label: '⬇️ Alış' },
   { href: '/satis-faturalar', label: '⬆️ Satış' },
+  { href: '/urunler', label: '🔧 Ürünler' },
   { href: '/stok', label: '📦 Stok' },
-  { href: '/personel', label: '👤 Personel' },
-  { href: '/kasa', label: '💰 Kasa' },
-  { href: '/restoran', label: '🍽️ Restoran' },
-  { href: '/mutfak', label: '🍳 Mutfak' },
+  { href: '/import', label: '📤 Import' },
   { href: '/yedekleme', label: '💾 Yedekleme' },
   { href: '/ayarlar', label: '⚙️ Ayarlar' },
-  { href: '/import', label: '📤 Import' },
+  { href: '/personel', label: '👤 Personel' },
+  { href: '/restoran', label: '🍽️ Restoran' },
+  { href: '/mutfak', label: '🍳 Mutfak' },
 ];
 
 // Personel sadece bunları görür
