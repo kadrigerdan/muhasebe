@@ -27,7 +27,7 @@ export default async function AnaSayfa() {
     tumBildirimler(),
   ]);
 
-  const cariSayi = cariArr[0];
+  const cariSayi = cariArr[0]?.[0] ?? { toplam: 0 };
   const urunSayi = urunArr[0];
   const personelSayi = personelArr[0];
   const stokDeger = stokArr[0];

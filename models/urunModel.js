@@ -12,7 +12,6 @@ export async function tumUrunler({ arama, durum } = {}) {
     sartlar.push('durum = ?');
     params.push(durum ? 1 : 0);
   }
-
   return await query(
     `SELECT id, urun_adi, tip, kritik_seviye,
             varsayilan_alis_fiyati, varsayilan_satis_fiyati,

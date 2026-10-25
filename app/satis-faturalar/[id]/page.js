@@ -41,6 +41,14 @@ export default async function SatisFaturaDetayPage({ params }) {
 
         <div className="flex items-center gap-2 flex-wrap">
           <ArsivleButonu id={fatura.id} action={satisFaturaArsivleAction} />
+          {fatura.fatura_tipi !== 'iade' && !fatura.arsivlendi && (
+            <Link
+              href={`/satis-faturalar/${id}/iade`}
+              className="bg-amber-600 text-white px-4 py-2 rounded hover:bg-amber-700 text-sm"
+            >
+              ↩️ İade Kes
+            </Link>
+          )}
           <Link
             href={`/satis-faturalar/${id}/yazdir`}
             className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 text-sm"

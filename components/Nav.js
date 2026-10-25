@@ -21,6 +21,7 @@ const adminLinkler = [
   { href: '/mutfak', label: '🍳 Mutfak' },
 ];
 
+
 // Personel sadece bunları görür
 const personelLinkler = [
   { href: '/restoran', label: '🍽️ Restoran' },

@@ -31,23 +31,27 @@ export default function SatisFaturaList({ faturalar }) {
           const odenen = Number(f.odenen_tutar ?? 0);
           const kalan = toplam - odenen;
           const arsivli = Number(f.arsivlendi) === 1;
+          const iade = f.fatura_tipi === 'iade';   // ← ekle
 
           return (
-            <tr
-              key={String(f.id)}
-              className={arsivli ? 'bg-amber-50/40 text-gray-400' : ''}
-            >
+            <tr key={String(f.id)} className={arsivli ? 'bg-amber-50/40 text-gray-400' : ''}>
               <td className="border p-2">
                 {String(f.id)}
-                {arsivli && (
+                {iade && (                                            // ← ekle
                   <span className="ml-2 text-[10px] bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded align-middle">
+                    ↩️ İade
+                  </span>
+                )}
+                {arsivli && (
+                  <span className="ml-2 text-[10px] bg-gray-200 text-gray-700 px-1.5 py-0.5 rounded align-middle">
                     🗄️ Arşiv
                   </span>
                 )}
               </td>
-              <td className="border p-2">{f.cari_unvan}</td>
+              {/* diğer sütunlar aynı kalır */}
+              <td className="border p-2">{f.cari_unvan ?? '—'}</td>
               <td className="border p-2">
-                {new Date(f.tarih).toLocaleDateString('tr-TR')}
+                {f.tarih ? new Date(f.tarih).toLocaleDateString('tr-TR') : '—'}
               </td>
               <td className="border p-2 text-right">
                 {paraFormat(toplam)} ₺
@@ -55,44 +59,39 @@ export default function SatisFaturaList({ faturalar }) {
               <td className={`border p-2 text-right ${arsivli ? '' : 'text-green-700'}`}>
                 {paraFormat(odenen)} ₺
               </td>
-              <td className={`border p-2 text-right font-medium ${arsivli
-                ? 'text-gray-400'
-                : kalan > 0.01 ? 'text-red-700' : 'text-gray-400'
+              <td className={`border p-2 text-right font-medium ${arsivli ? 'text-gray-400' : kalan > 0.01 ? 'text-red-700' : 'text-gray-400'
                 }`}>
                 {kalan > 0.01 ? paraFormat(kalan) + ' ₺' : '—'}
               </td>
               <td className="border p-2 text-center">
                 {arsivli ? (
-                  <span className="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded">
-                    —
-                  </span>
+                  <span className="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded">—</span>
                 ) : (
                   <>
                     {f.durum === 'odendi' && (
-                      <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded">
-                        Ödendi
-                      </span>
+                      <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded">Ödendi</span>
                     )}
                     {f.durum === 'kismi' && (
-                      <span className="text-xs bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded">
-                        Kısmi
-                      </span>
+                      <span className="text-xs bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded">Kısmi</span>
                     )}
                     {f.durum === 'odenmedi' && (
-                      <span className="text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded">
-                        Ödenmedi
-                      </span>
+                      <span className="text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded">Ödenmedi</span>
                     )}
                   </>
                 )}
               </td>
               <td className="border p-2 space-x-2 whitespace-nowrap">
-                <Link
-                  href={`/satis-faturalar/${f.id}`}
-                  className="text-blue-600 hover:underline"
-                >
+                <Link href={`/satis-faturalar/${f.id}`} className="text-blue-600 hover:underline">
                   Detay
                 </Link>
+                {iade && f.kaynak_fatura_id && (
+                  <Link
+                    href={`/satis-faturalar/${f.kaynak_fatura_id}`}
+                    className="text-amber-700 hover:underline text-xs"
+                  >
+                    ↩️ Kaynak #{f.kaynak_fatura_id}
+                  </Link>
+                )}
               </td>
             </tr>
           );

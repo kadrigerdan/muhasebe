@@ -6,18 +6,21 @@ export async function tumSatisFaturalar({ gorunum = 'aktif' } = {}) {
             : gorunum === 'aktif' ? 'WHERE f.arsivlendi = 0'
                 : '';
 
-    return await query(`
-    SELECT f.id, f.tarih, f.odenen_tutar, f.durum, f.arsivlendi,
-           c.unvan AS cari_unvan,
-           COUNT(d.id) AS kalem_sayisi,
-           COALESCE(SUM(d.adet * d.birim_fiyat), 0) AS toplam
-      FROM satis_faturalar f
-      JOIN cariler c ON c.id = f.cari_id
-      LEFT JOIN satis_fatura_detaylari d ON d.fatura_id = f.id
-      ${where}
-     GROUP BY f.id, f.tarih, f.odenen_tutar, f.durum, f.arsivlendi, c.unvan
-     ORDER BY f.tarih DESC, f.id DESC
-  `);
+    const rows = await query(`  
+        SELECT f.id, f.tarih, f.odenen_tutar, f.durum, f.arsivlendi,
+               f.fatura_tipi, f.kaynak_fatura_id,
+               c.unvan AS cari_unvan,
+               COUNT(d.id) AS kalem_sayisi,
+               COALESCE(SUM(d.adet * d.birim_fiyat), 0) AS toplam
+          FROM satis_faturalar f
+          JOIN cariler c ON c.id = f.cari_id
+          LEFT JOIN satis_fatura_detaylari d ON d.fatura_id = f.id
+          ${where}
+         GROUP BY f.id, f.tarih, f.odenen_tutar, f.durum, f.arsivlendi,
+                  f.fatura_tipi, f.kaynak_fatura_id, c.unvan
+         ORDER BY f.tarih DESC, f.id DESC
+    `);
+    return rows;
 }
 
 export async function satisFaturaGetir(id) {
@@ -104,56 +107,22 @@ export async function satisFaturaOlustur({ cari_id, tarih, kalemler }) {
     }
 }
 
-// export async function satisFaturaSil(id) {
-//     const conn = await getConnection();
-//     try {
-//         await conn.beginTransaction();
-
-//         const kalemler = await conn.query(
-//             'SELECT urun_id, adet FROM satis_fatura_detaylari WHERE fatura_id = ?',
-//             [id]
-//         );
-
-//         for (const k of kalemler) {
-//             await conn.query(
-//                 'UPDATE urunler SET stok = stok + ? WHERE id = ?',
-//                 [k.adet, k.urun_id]
-//             );
-//         }
-
-//         await conn.query(
-//             "DELETE FROM stok_hareketleri WHERE kaynak = 'satis_fatura' AND kaynak_id = ?",
-//             [id]
-//         );
-//         await conn.query('DELETE FROM satis_fatura_detaylari WHERE fatura_id = ?', [id]);
-//         const res = await conn.query('DELETE FROM satis_faturalar WHERE id = ?', [id]);
-
-//         await conn.commit();
-//         return Number(res.affectedRows);
-//     } catch (err) {
-//         await conn.rollback();
-//         throw err;
-//     } finally {
-//         conn.release();
-//     }
-// }
-
 export async function satisMaliOzet({ gorunum = 'aktif' } = {}) {
     const where =
         gorunum === 'arsiv' ? 'WHERE f.arsivlendi = 1'
             : gorunum === 'aktif' ? 'WHERE f.arsivlendi = 0'
                 : '';
 
-    const rows = await query(`
-    SELECT
-      COUNT(DISTINCT f.id) AS fatura_sayisi,
-      COALESCE(SUM(d.adet * d.birim_fiyat), 0) AS toplam_tutar,
-      COALESCE(SUM(d.adet), 0) AS toplam_adet
-    FROM satis_faturalar f
-    LEFT JOIN satis_fatura_detaylari d ON d.fatura_id = f.id
-    ${where}
-  `);
-    return rows[0];
+    const rows = await query(`  
+        SELECT
+            COUNT(DISTINCT f.id) AS fatura_sayisi,
+            COALESCE(SUM(d.adet * d.birim_fiyat), 0) AS toplam_tutar,
+            COALESCE(SUM(d.adet), 0) AS toplam_adet
+          FROM satis_faturalar f
+          LEFT JOIN satis_fatura_detaylari d ON d.fatura_id = f.id
+          ${where}
+    `);
+    return rows[0] ?? { fatura_sayisi: 0, toplam_tutar: 0, toplam_adet: 0 };
 }
 
 // -------- TAHSİLAT --------
@@ -225,4 +194,108 @@ export async function satisFaturaArsivle(id, { neden } = {}) {
         [neden ?? null, id]
     );
     return Number(res.affectedRows);
+}
+
+export async function satisFaturaIadeEdilebilir(faturaId) {
+    // Orijinal kalemler + iade edilmiş miktarlar
+    return await query(
+        `SELECT
+            d.urun_id,
+            u.urun_adi,
+            d.adet AS orijinal_adet,
+            d.birim_fiyat,
+            COALESCE((
+                SELECT SUM(iad.adet)
+                  FROM satis_fatura_detaylari iad
+                  JOIN satis_faturalar iadf ON iadf.id = iad.fatura_id
+                 WHERE iadf.kaynak_fatura_id = d.fatura_id
+                   AND iadf.fatura_tipi = 'iade'
+                   AND iad.urun_id = d.urun_id
+            ), 0) AS iade_edilen,
+            d.adet - COALESCE((
+                SELECT SUM(iad.adet)
+                  FROM satis_fatura_detaylari iad
+                  JOIN satis_faturalar iadf ON iadf.id = iad.fatura_id
+                 WHERE iadf.kaynak_fatura_id = d.fatura_id
+                   AND iadf.fatura_tipi = 'iade'
+                   AND iad.urun_id = d.urun_id
+            ), 0) AS iade_edilebilir
+          FROM satis_fatura_detaylari d
+          JOIN urunler u ON u.id = d.urun_id
+         WHERE d.fatura_id = ?`,
+        [faturaId]
+    );
+}
+
+export async function satisIadeFaturaOlustur({ kaynak_fatura_id, tarih, kalemler }) {
+    const conn = await getConnection();
+    try {
+        await conn.beginTransaction();
+
+        // Kaynak faturayı bul (cari_id lazım)
+        const [kaynak] = await conn.query(
+            'SELECT id, cari_id, fatura_tipi FROM satis_faturalar WHERE id = ? FOR UPDATE',
+            [kaynak_fatura_id]
+        );
+        if (!kaynak) throw new Error('Kaynak fatura bulunamadı.');
+        if (kaynak.fatura_tipi === 'iade') {
+            throw new Error('İade faturasının iadesi yapılamaz.');
+        }
+        // İade faturası kaydı
+        const [basRes] = await conn.query(
+            `INSERT INTO satis_faturalar
+              (cari_id, tarih, fatura_tipi, kaynak_fatura_id)
+             VALUES (?, ?, 'iade', ?)`,
+            [kaynak.cari_id, tarih, kaynak_fatura_id]
+        );
+        const yeniFaturaId = Number(basRes.insertId);
+
+        for (const k of kalemler) {
+            // İade edilebilir miktarı kontrol et
+            const [kontrol] = await conn.query(
+                `SELECT
+                    (SELECT adet FROM satis_fatura_detaylari
+                      WHERE fatura_id = ? AND urun_id = ?) AS orijinal,
+                    COALESCE((
+                      SELECT SUM(iad.adet) FROM satis_fatura_detaylari iad
+                        JOIN satis_faturalar iadf ON iadf.id = iad.fatura_id
+                       WHERE iadf.kaynak_fatura_id = ? AND iadf.fatura_tipi = 'iade'
+                         AND iad.urun_id = ?
+                    ), 0) AS onceki_iade`,
+                [kaynak_fatura_id, k.urun_id, kaynak_fatura_id, k.urun_id]
+            );
+            const kalan = Number(kontrol.orijinal ?? 0) - Number(kontrol.onceki_iade ?? 0);
+            if (Number(k.adet) > kalan) {
+                throw new Error(`İade miktarı kalanı aşıyor (ürün: ${k.urun_id}, kalan: ${kalan}).`);
+            }
+            // İade detayı
+            await conn.query(
+                `INSERT INTO satis_fatura_detaylari
+                   (fatura_id, urun_id, adet, birim_fiyat)
+                 VALUES (?, ?, ?, ?)`,
+                [yeniFaturaId, k.urun_id, k.adet, k.birim_fiyat]
+            );
+
+            // Stok hareketi — iade = giriş (stok ARTAR)
+            await conn.query(
+                `INSERT INTO stok_hareketleri
+                   (urun_id, tip, miktar, aciklama, kaynak, kaynak_id, tarih)
+                 VALUES (?, 'iade', ?, ?, 'satis_fatura', ?, ?)`,
+                [k.urun_id, k.adet, `Satış iadesi #${yeniFaturaId}`, yeniFaturaId, tarih]
+            );
+
+            // Stok artır (varsayilan_satis_fiyati'na dokunma!)
+            await conn.query(
+                'UPDATE urunler SET stok = stok + ? WHERE id = ?',
+                [k.adet, k.urun_id]
+            );
+        }
+        await conn.commit();
+        return yeniFaturaId;
+    } catch (err) {
+        await conn.rollback();
+        throw err;
+    } finally {
+        conn.release();
+    }
 }

@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useTransition } from 'react';
-import { alisFaturaSilAction } from '@/actions/alisFaturaActions';
 
 export default function AlisFaturaSilButton({ id }) {
     const [pending, startTransition] = useTransition();
