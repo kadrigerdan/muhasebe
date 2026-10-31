@@ -15,34 +15,39 @@ export async function kritikStokBildirim() {
 }
 
 // ==================== ÖDENMEMİŞ FATURALAR ====================
-export async function odenmemisFaturalar() {
-  const satis = await query(
-    `SELECT f.id, f.tarih, c.unvan AS cari, f.durum,
-            COALESCE(SUM(d.adet * d.birim_fiyat), 0) AS toplam,
-            f.odenen_tutar
-       FROM satis_faturalar f
-       JOIN cariler c ON c.id = f.cari_id
-       LEFT JOIN satis_fatura_detaylari d ON d.fatura_id = f.id
-      WHERE f.durum IN ('odenmedi', 'kismi')
-      GROUP BY f.id, f.tarih, c.unvan, f.durum, f.odenen_tutar
-      ORDER BY f.tarih ASC
-      LIMIT 10`
-  );
+async function odenmemisFaturalar() {
+  const satisRows = await query(`
+    SELECT f.id, f.tarih, c.unvan AS cari, f.durum,
+           COALESCE(SUM(d.adet * d.birim_fiyat), 0) AS toplam,
+           f.odenen_tutar
+      FROM satis_faturalar f
+      JOIN cariler c ON c.id = f.cari_id
+      LEFT JOIN satis_fatura_detaylari d ON d.fatura_id = f.id
+     WHERE f.fatura_tipi = 'normal'
+       AND f.durum IN ('odenmedi', 'kismi')
+       AND f.arsivlendi = 0 
+     GROUP BY f.id, f.tarih, c.unvan, f.durum, f.odenen_tutar
+     ORDER BY f.tarih ASC
+  `);
 
-  const alis = await query(
-    `SELECT f.id, f.tarih, c.unvan AS cari, f.durum,
-            COALESCE(SUM(d.miktar * d.birim_fiyat), 0) AS toplam,
-            f.odenen_tutar
-       FROM alis_faturalar f
-       JOIN cariler c ON c.id = f.cari_id
-       LEFT JOIN alis_fatura_detaylari d ON d.fatura_id = f.id
-      WHERE f.durum IN ('odenmedi', 'kismi')
-      GROUP BY f.id, f.tarih, c.unvan, f.durum, f.odenen_tutar
-      ORDER BY f.tarih ASC
-      LIMIT 10`
-  );
+  const alisRows = await query(`
+    SELECT f.id, f.tarih, c.unvan AS cari, f.durum,
+           COALESCE(SUM(d.miktar * d.birim_fiyat), 0) AS toplam,
+           f.odenen_tutar
+      FROM alis_faturalar f
+      JOIN cariler c ON c.id = f.cari_id
+      LEFT JOIN alis_fatura_detaylari d ON d.fatura_id = f.id
+     WHERE f.fatura_tipi = 'normal'
+       AND f.durum IN ('odenmedi', 'kismi')
+       AND f.arsivlendi = 0 
+     GROUP BY f.id, f.tarih, c.unvan, f.durum, f.odenen_tutar
+     ORDER BY f.tarih ASC
+  `);
 
-  return { satis, alis };
+  return {
+    satis: satisRows,
+    alis: alisRows,
+  };
 }
 
 // ==================== UZUN SÜRE AÇIK ADİSYONLAR ====================

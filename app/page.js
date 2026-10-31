@@ -9,6 +9,7 @@ import Bildirimler from '@/components/Bildirimler';
 export const dynamic = 'force-dynamic';
 
 export default async function AnaSayfa() {
+
   const [
     cariArr, urunArr, personelArr, stokArr, kritikArr, tukenenArr,
     alisArr, satisArr, kasaTip, kasaGenel, restoranOzet, bildirimData,
@@ -27,16 +28,20 @@ export default async function AnaSayfa() {
     tumBildirimler(),
   ]);
 
-  const cariSayi = cariArr[0]?.[0] ?? { toplam: 0 };
-  const urunSayi = urunArr[0];
-  const personelSayi = personelArr[0];
-  const stokDeger = stokArr[0];
-  const kritikSayi = kritikArr[0];
-  const tukenenSayi = tukenenArr[0];
-  const alisToplam = Number(alisArr[0].toplam);
-  const satisToplam = Number(satisArr[0].toplam);
+
+
+
+  const cariSayi = cariArr[0] ?? { toplam: 0 };
+  const urunSayi = urunArr[0] ?? { toplam: 0 };
+  const personelSayi = personelArr[0] ?? { toplam: 0 };
+  const stokDeger = stokArr[0] ?? { deger: 0 };
+  const kritikSayi = kritikArr[0] ?? { toplam: 0 };
+  const tukenenSayi = tukenenArr[0] ?? { toplam: 0 };
+  const alisToplam = Number(alisArr[0]?.toplam ?? 0);
+  const satisToplam = Number(satisArr[0]?.toplam ?? 0);
   const kar = satisToplam - alisToplam;
   const restoran = restoranOzet;
+
 
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-2">

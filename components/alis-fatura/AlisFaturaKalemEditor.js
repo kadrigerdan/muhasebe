@@ -75,10 +75,11 @@ export default function AlisFaturaKalemEditor({ urunler, onChange }) {
               <tr key={i}>
                 <td className="border p-1">
                   <select
-                    value={k.urun_id}
+                    value={k.urun_id ?? ''}
                     onChange={(e) => alanDegis(i, 'urun_id', e.target.value)}
                     className="w-full border rounded px-2 py-1"
                   >
+                    <option value="">— Ürün seçin —</option>          {/* ← EKLE */}
                     {urunler.map((u) => (
                       <option key={u.id} value={u.id}>
                         {u.urun_adi} — Alış: {paraFormat(u.varsayilan_alis_fiyati)} ₺ | Satış: {paraFormat(u.varsayilan_satis_fiyati)} ₺ (stok: {u.stok})

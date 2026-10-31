@@ -10,9 +10,15 @@ export default function CariList({ cariler }) {
           <th className="border p-2 text-center">Tip</th>
           <th className="border p-2 text-left">Telefon</th>
           <th className="border p-2 text-left">Adres</th>
-          <th className="border p-2 text-right">Borç</th>
-          <th className="border p-2 text-right">Alacak</th>
-          <th className="border p-2 text-right">Bakiye</th>
+          <th className="border p-2 text-right">
+            Bize Borçlu
+            <div className="text-[10px] font-normal text-gray-500">(Alacağımız)</div>
+          </th>
+          <th className="border p-2 text-right">
+            Bizim Borcumuz
+            <div className="text-[10px] font-normal text-gray-500">(Tedarikçiye)</div>
+          </th>
+          <th className="border p-2 text-right">Net Bakiye</th>
           <th className="border p-2 text-left">İşlem</th>
         </tr>
       </thead>

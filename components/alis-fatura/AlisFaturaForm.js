@@ -17,13 +17,45 @@ export default function AlisFaturaForm({ cariler, urunler, onSuccess }) {
         }
     }, [state, onSuccess, router]);
 
+    // Form submit öncesi validasyon + temizleme
+    const onSubmit = (e) => {
+        const gecerliKalemler = kalemler.filter(
+            (k) => Number(k.urun_id) > 0 && Number(k.miktar) > 0
+        );
+
+        if (!gecerliKalemler.length) {
+            e.preventDefault();
+            alert('En az bir ürün ve miktar girmelisiniz.');
+            return;
+        }
+
+        // Eksik satır varsa uyar (opsiyonel — boşları at, kalanı gönder)
+        if (gecerliKalemler.length !== kalemler.length) {
+            const onay = confirm(
+                `${kalemler.length - gecerliKalemler.length} boş kalem atlanacak. Devam edilsin mi?`
+            );
+            if (!onay) {
+                e.preventDefault();
+                return;
+            }
+        }
+
+        // Hidden input'u filtrelenmiş kalemlerle güncelle
+        e.currentTarget.elements.kalemler.value = JSON.stringify(gecerliKalemler);
+    };
+
     return (
-        <form action={formAction} className="space-y-4">
+        <form action={formAction} onSubmit={onSubmit} className="space-y-4">
             {state?.error && (
                 <div className="bg-red-100 text-red-700 p-2 rounded">{state.error}</div>
             )}
 
-            <input type="hidden" name="kalemler" value={JSON.stringify(kalemler)} />
+            <input
+                type="hidden"
+                name="kalemler"
+                value={JSON.stringify(kalemler)}
+                readOnly
+            />
 
             <div className="grid grid-cols-2 gap-4">
                 <div>

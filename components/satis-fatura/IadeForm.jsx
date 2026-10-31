@@ -1,13 +1,14 @@
 'use client';
-import { useActionState, useState } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { satisIadeFaturaAction } from '@/actions/satisFaturaActions';
 import { paraFormat } from '@/lib/format';
 
 export default function IadeForm({ kaynakFaturaId, kalemler, varsayilanTarih }) {
 	const router = useRouter();
-	const [state, formAction, pending] = useActionState(satisIadeFaturaAction, {});
 	const [tarih, setTarih] = useState(varsayilanTarih);
+	const [hata, setHata] = useState(null);
+	const [pending, setPending] = useState(false);
 
 	const [secimler, setSecimler] = useState(() =>
 		kalemler.reduce((acc, k) => {
@@ -15,19 +16,18 @@ export default function IadeForm({ kaynakFaturaId, kalemler, varsayilanTarih }) 
 			return acc;
 		}, {})
 	);
+
 	const toggle = (urun_id) => {
-		setSecimler((s) => {
-			const k = kalemler.find((x) => Number(x.urun_id) === Number(urun_id));
-			const mevcut = s[urun_id];
-			const kalan = Number(k.iade_edilebilir);
-			return {
-				...s,
-				[urun_id]: mevcut.secili
-					? { secili: false, adet: 0 }
-					: { secili: true, adet: kalan },
-			};
-		});
+		const k = kalemler.find((x) => Number(x.urun_id) === Number(urun_id));
+		const kalan = Number(k.iade_edilebilir);
+		setSecimler((s) => ({
+			...s,
+			[urun_id]: s[urun_id].secili
+				? { secili: false, adet: 0 }
+				: { secili: true, adet: kalan },
+		}));
 	};
+
 	const setAdet = (urun_id, deger) => {
 		const k = kalemler.find((x) => Number(x.urun_id) === Number(urun_id));
 		const kalan = Number(k.iade_edilebilir);
@@ -39,14 +39,16 @@ export default function IadeForm({ kaynakFaturaId, kalemler, varsayilanTarih }) 
 
 	const toplam = kalemler.reduce((sum, k) => {
 		const s = secimler[k.urun_id];
-		if (!s || !s.secili) return sum;
+		if (!s?.secili) return sum;
 		return sum + s.adet * Number(k.birim_fiyat);
 	}, 0);
 
-	const onSubmit = (e) => {
+	const onSubmit = async (e) => {
 		e.preventDefault();
-		const seciliKalemler = kalemler
-			.filter((k) => secimler[k.urun_id]?.secili && secimler[k.urun_id].adet > 0)
+		setHata(null);
+
+		const seciliKalemler = kalemler.filter((k) =>
+			secimler[k.urun_id]?.secili && secimler[k.urun_id].adet > 0)
 			.map((k) => ({
 				urun_id: Number(k.urun_id),
 				adet: Number(secimler[k.urun_id].adet),
@@ -54,22 +56,29 @@ export default function IadeForm({ kaynakFaturaId, kalemler, varsayilanTarih }) 
 			}));
 
 		if (!seciliKalemler.length) {
-			alert('En az bir kalem seçin.');
+			setHata('En az bir kalem seçin.');
 			return;
 		}
 
-		const fd = new FormData();
-		fd.set('kaynak_fatura_id', String(kaynakFaturaId));
-		fd.set('tarih', tarih);
-		fd.set('kalemler', JSON.stringify(seciliKalemler));
-		formAction(fd);
-	};
+		setPending(true);
+		try {
+			const fd = new FormData();
+			fd.set('kaynak_fatura_id', String(kaynakFaturaId));
+			fd.set('tarih', tarih);
+			fd.set('kalemler', JSON.stringify(seciliKalemler));
 
-	// Başarılıysa detay sayfasına yönlendir
-	if (state?.ok && state?.iadeFaturaId) {
-		router.push(`/satis-faturalar/${state.iadeFaturaId}`);
-		return null;
-	}
+			const res = await satisIadeFaturaAction({}, fd);
+			if (res?.error) {
+				setHata(res.error);
+				setPending(false);
+				return;
+			}
+			router.push(`/satis-faturalar/${res.iadeFaturaId}`);
+		} catch (err) {
+			setHata(err.message || 'Bir hata oluştu.');
+			setPending(false);
+		}
+	};
 
 	return (
 		<form onSubmit={onSubmit} className="space-y-4">
@@ -84,9 +93,9 @@ export default function IadeForm({ kaynakFaturaId, kalemler, varsayilanTarih }) 
 				/>
 			</div>
 
-			{state?.error && (
+			{hata && (
 				<div className="bg-red-50 text-red-700 border border-red-200 p-3 rounded text-sm">
-					{state.error}
+					{hata}
 				</div>
 			)}
 
@@ -158,7 +167,7 @@ export default function IadeForm({ kaynakFaturaId, kalemler, varsayilanTarih }) 
 				</button>
 				<button
 					type="button"
-					onClick={() => history.back()}
+					onClick={() => router.back()}
 					className="border px-4 py-2 rounded hover:bg-slate-50"
 				>
 					Vazgeç

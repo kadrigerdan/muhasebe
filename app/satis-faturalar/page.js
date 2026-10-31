@@ -55,6 +55,16 @@ export default async function SatisFaturaListPage({ searchParams }) {
           >
             Tümü
           </Link>
+          <Link
+            href="/satis-faturalar?gorunum=iade"
+            className={
+              gorunum === 'iade'
+                ? 'bg-purple-600 text-white px-3 py-1.5 rounded text-sm'
+                : 'border px-3 py-1.5 rounded text-sm hover:bg-slate-50'
+            }
+          >
+            ↩️ İade
+          </Link>
         </div>
 
         <div className="flex items-center gap-2">

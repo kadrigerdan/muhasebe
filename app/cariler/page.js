@@ -9,6 +9,7 @@ export const dynamic = 'force-dynamic';
 export default async function CariListPage() {
 
     const cariler = await cariBakiyeListesi();
+    console.log('Ergaz:', cariler.find(c => c.id === 1));
 
     return (
         <div className="p-6 max-w-6xl mx-auto space-y-4">

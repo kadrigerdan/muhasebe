@@ -1,6 +1,6 @@
 'use client';
 
-import { useActionState, useEffect, useRef, useState } from 'react';
+import { useActionState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { alisFaturaOdemeAction } from '@/actions/alisFaturaActions';
 import { paraFormat } from '@/lib/format';
@@ -8,13 +8,11 @@ import { paraFormat } from '@/lib/format';
 export default function OdemeForm({ faturaId, kalan, kasaHesaplari }) {
     const router = useRouter();
     const formRef = useRef(null);
-    const [kasadanDus, setKasadanDus] = useState(false);
     const [state, formAction, pending] = useActionState(alisFaturaOdemeAction, null);
 
     useEffect(() => {
         if (state?.ok) {
             formRef.current?.reset();
-            setKasadanDus(false);
             router.refresh();
         }
     }, [state, router]);
@@ -42,8 +40,9 @@ export default function OdemeForm({ faturaId, kalan, kasaHesaplari }) {
             )}
 
             <input type="hidden" name="fatura_id" value={faturaId} />
+            <input type="hidden" name="kasadan_dus" value="on" />
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
                 <div>
                     <label className="block text-sm font-medium mb-1">Tutar *</label>
                     <input
@@ -72,31 +71,6 @@ export default function OdemeForm({ faturaId, kalan, kasaHesaplari }) {
                     />
                 </div>
 
-                <div className="flex items-end">
-                    <button
-                        type="submit"
-                        disabled={pending}
-                        className="w-full bg-orange-600 text-white px-4 py-2 rounded hover:bg-orange-700 disabled:opacity-50"
-                    >
-                        {pending ? 'Kaydediliyor...' : 'Ödeme Yap'}
-                    </button>
-                </div>
-            </div>
-
-            <div className="flex items-center gap-2">
-                <input
-                    type="checkbox"
-                    name="kasadan_dus"
-                    id="kasadan_dus"
-                    checked={kasadanDus}
-                    onChange={(e) => setKasadanDus(e.target.checked)}
-                />
-                <label htmlFor="kasadan_dus" className="text-sm">
-                    Kasadan düşülsün
-                </label>
-            </div>
-
-            {kasadanDus && (
                 <div>
                     <label className="block text-sm font-medium mb-1">Kasa *</label>
                     <select
@@ -112,7 +86,17 @@ export default function OdemeForm({ faturaId, kalan, kasaHesaplari }) {
                         ))}
                     </select>
                 </div>
-            )}
+
+                <div className="flex items-end">
+                    <button
+                        type="submit"
+                        disabled={pending}
+                        className="w-full bg-orange-600 text-white px-4 py-2 rounded hover:bg-orange-700 disabled:opacity-50"
+                    >
+                        {pending ? 'Kaydediliyor...' : 'Ödeme Yap'}
+                    </button>
+                </div>
+            </div>
         </form>
     );
 }

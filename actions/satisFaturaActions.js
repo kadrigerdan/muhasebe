@@ -1,7 +1,6 @@
 'use server';
 import { revalidatePath } from 'next/cache';
-import { satisFaturaOlustur, satisFaturaSil, satisIadeFaturaOlustur } from '@/models/satisFaturaModel';
-import { satisFaturaArsivle } from "@/models/satisFaturaModel"
+import { satisFaturaOlustur, satisFaturaSil, satisIadeFaturaOlustur, satisFaturaArsivle, satisFaturaGeriAl } from '@/models/satisFaturaModel';
 
 export async function satisFaturaEkleAction(prevState, formData) {
     const cari_id = Number(formData.get('cari_id'));
@@ -150,5 +149,57 @@ export async function satisIadeFaturaAction(prevState, formData) {
     } catch (err) {
         console.error('satisIadeFatura:', err);
         return { error: err.message || 'İade faturası kesilemedi.' };
+    }
+}
+
+export async function satisFaturaGeriAlAction(id) {
+    const faturaId = Number(id);
+    if (!Number.isFinite(faturaId) || faturaId <= 0) {
+        return { error: 'Geçersiz fatura.' };
+    }
+    try {
+        const affected = await satisFaturaGeriAl(faturaId);
+        if (affected === 0) {
+            return { error: 'Fatura bulunamadı veya arşivde değil.' };
+        }
+        revalidatePath('/satis-faturalar');
+        revalidatePath(`/satis-faturalar/${faturaId}`);
+        return { ok: true };
+    } catch (err) {
+        console.error(err);
+        return { error: 'Geri alınamadı.' };
+    }
+}
+
+export async function satisIadeOdemeAction(prevState, formData) {
+    const fatura_id = Number(formData.get('fatura_id'));
+    const tutar = Number(formData.get('tutar'));
+    const tarih = formData.get('tarih');
+    const kasa_id = Number(formData.get('kasa_id'));
+    const aciklama = formData.get('aciklama') || null;
+
+    if (!Number.isFinite(fatura_id) || fatura_id <= 0) {
+        return { error: 'Fatura seçilmelidir.' };
+    }
+    if (!Number.isFinite(tutar) || tutar <= 0) {
+        return { error: 'Tutar 0 olamaz.' };
+    }
+    if (!tarih) return { error: 'Tarih zorunludur.' };
+    if (!Number.isFinite(kasa_id) || kasa_id <= 0) {
+        return { error: 'Kasa seçilmelidir.' };
+    }
+
+    try {
+        const { satisIadeOdemeEkle } = await import('@/models/satisFaturaModel');
+        await satisIadeOdemeEkle(fatura_id, { tutar, tarih, kasa_id, aciklama });
+        revalidatePath('/satis-faturalar');
+        revalidatePath(`/satis-faturalar/${fatura_id}`);
+        revalidatePath('/kasa');
+        revalidatePath('/kasa/hareketler');
+        revalidatePath('/cariler');
+        return { ok: true };
+    } catch (err) {
+        console.error('satisIadeOdeme:', err);
+        return { error: err.message || 'İade ödemesi kaydedilemedi.' };
     }
 }

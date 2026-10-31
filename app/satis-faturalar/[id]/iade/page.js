@@ -17,8 +17,8 @@ export default async function SatisIadePage({ params }) {
         return (
             <div className="p-6 max-w-3xl mx-auto">
                 <div className="bg-amber-50 border border-amber-200 text-amber-800 p-4 rounded">
-                    İade faturasının iadesi yapılamaz.
-                    <Link href={`/satis-faturalar/${id}`} className="underline ml-2">Faturaya dön</Link>
+                    İade faturasının iadesi yapılamaz.{' '}
+                    <Link href={`/satis-faturalar/${id}`} className="underline">Faturaya dön</Link>
                 </div>
             </div>
         );
@@ -31,15 +31,15 @@ export default async function SatisIadePage({ params }) {
         return (
             <div className="p-6 max-w-3xl mx-auto">
                 <div className="bg-slate-50 border p-4 rounded">
-                    Bu faturadaki tüm kalemler zaten iade edilmiş.
-                    <Link href={`/satis-faturalar/${id}`} className="underline ml-2">Faturaya dön</Link>
+                    Bu faturadaki tüm kalemler zaten iade edilmiş.{' '}
+                    <Link href={`/satis-faturalar/${id}`} className="underline">Faturaya dön</Link>
                 </div>
             </div>
         );
     }
 
     return (
-        <div className="p-6 max-w-3xl mx-auto space-y-4">
+        <div className="p-6 max-w-4xl mx-auto space-y-4">
             <h1 className="text-2xl font-bold">↩️ Satış İadesi — Fatura #{fatura.id}</h1>
             <div className="text-sm text-gray-600">
                 Müşteri: <b>{fatura.cari_unvan}</b> · Orijinal Tarih:{' '}
