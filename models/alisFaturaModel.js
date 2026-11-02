@@ -17,7 +17,20 @@ export async function tumAlisFaturalar({ gorunum = 'aktif' } = {}) {
                 FROM alis_fatura_detaylari d2
                WHERE d2.fatura_id = f.id
             ) - 0.01`
-                    : '';
+                    : gorunum === 'aktif' ? `WHERE f.fatura_tipi = 'normal' AND COALESCE(f.arsivlendi, 0) = 0
+             AND (
+              SELECT COALESCE(SUM(iad.miktar), 0)
+                FROM alis_fatura_detaylari iad
+                JOIN alis_faturalar iadf ON iadf.id = iad.fatura_id
+               WHERE iadf.kaynak_fatura_id = f.id
+                 AND iadf.fatura_tipi = 'iade'
+                 AND COALESCE(iadf.arsivlendi, 0) = 0
+            ) < (
+              SELECT COALESCE(SUM(d2.miktar), 0)
+                FROM alis_fatura_detaylari d2
+               WHERE d2.fatura_id = f.id
+            ) - 0.01`
+                        : '';
 
     return await query(`
         SELECT f.id, f.tarih, f.odenen_tutar, f.durum, f.arsivlendi,

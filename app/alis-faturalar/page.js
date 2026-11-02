@@ -13,8 +13,6 @@ export default async function AlisFaturaListPage({ searchParams }) {
 
   const [faturalar, ozet] = await Promise.all([
     tumAlisFaturalar({ gorunum }), alisMaliOzet({ gorunum }),]);
-  console.log('DEBUG faturalar:', faturalar);
-  console.log('DEBUG length:', faturalar?.length);
 
   return (
     <div className="p-6 max-w-6xl mx-auto space-y-6">
@@ -63,6 +61,16 @@ export default async function AlisFaturaListPage({ searchParams }) {
             }
           >
             ↩️ İade
+          </Link>
+          <Link
+            href="/satis-faturalar?gorunum=iade_kesilmis"
+            className={
+              gorunum === 'iade_kesilmis'
+                ? 'bg-indigo-600 text-white px-3 py-1.5 rounded text-sm'
+                : 'border px-3 py-1.5 rounded text-sm hover:bg-slate-50'
+            }
+          >
+            ↩️ İade Kesilmiş
           </Link>
         </div>
 

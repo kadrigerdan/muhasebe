@@ -31,6 +31,7 @@ export default function SatisFaturaList({ faturalar = [] }) {
           const arsivli = Number(f.arsivlendi) === 1;
           const iade = f.fatura_tipi === 'iade';
 
+
           return (
             <tr key={String(f.id)} className={arsivli ? 'bg-amber-50/40 text-gray-400' : ''}>
               <td className="border p-2">
@@ -42,7 +43,7 @@ export default function SatisFaturaList({ faturalar = [] }) {
                 )}
                 {!iade && Number(f.iade_sayisi) > 0 && (              // ← EKLE
                   <span className="ml-2 text-[10px] bg-purple-100 text-purple-800 px-1.5 py-0.5 rounded align-middle">
-                    ↩️ İade Kesilmiş ({f.iade_sayisi})
+                    ↩️ İade Kesilmiş ({String(f.iade_sayisi)})
                   </span>
                 )}
                 {arsivli && (

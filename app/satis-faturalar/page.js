@@ -65,6 +65,16 @@ export default async function SatisFaturaListPage({ searchParams }) {
           >
             ↩️ İade
           </Link>
+          <Link
+            href="/satis-faturalar?gorunum=iade_kesilmis"
+            className={
+              gorunum === 'iade_kesilmis'
+                ? 'bg-indigo-600 text-white px-3 py-1.5 rounded text-sm'
+                : 'border px-3 py-1.5 rounded text-sm hover:bg-slate-50'
+            }
+          >
+            ↩️ İade Kesilmiş
+          </Link>
         </div>
 
         <div className="flex items-center gap-2">

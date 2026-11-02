@@ -17,8 +17,12 @@ export async function tumSatisFaturalar({ gorunum = 'aktif' } = {}) {
                 FROM satis_fatura_detaylari d2
                WHERE d2.fatura_id = f.id
             ) - 0.01`
-                    : '';
-
+                    : gorunum === 'iade_kesilmis' ? `WHERE f.fatura_tipi = 'normal' AND f.arsivlendi = 0
+    AND (SELECT COUNT(*) FROM satis_faturalar iad
+           WHERE iad.kaynak_fatura_id = f.id
+             AND iad.fatura_tipi = 'iade'
+             AND iad.arsivlendi = 0) > 0`
+                        : '';
     return await query(`
         SELECT f.id, f.tarih, f.odenen_tutar, f.durum, f.arsivlendi,
                f.fatura_tipi, f.kaynak_fatura_id,
