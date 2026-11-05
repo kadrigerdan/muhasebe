@@ -96,7 +96,17 @@ export default function AlisFaturaList({ faturalar = [] }) {
                     {f.durum === 'kismi' && (
                       <span className="text-xs bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded">Kısmi</span>
                     )}
-                    {f.durum === 'odenmedi' && (
+                    {f.durum === 'odenmedi' && Number(f.tamamen_iade) === 1 && (
+                      <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded">
+                        İade ile Kapandı
+                      </span>
+                    )}
+                    {f.durum === 'odenmedi' && Number(f.tamamen_iade) !== 1 && Number(f.iade_sayisi) > 0 && (
+                      <span className="text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded">
+                        Kısmi İade
+                      </span>
+                    )}
+                    {f.durum === 'odenmedi' && Number(f.tamamen_iade) !== 1 && Number(f.iade_sayisi) === 0 && (
                       <span className="text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded">Ödenmedi</span>
                     )}
                   </>

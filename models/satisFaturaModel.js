@@ -30,6 +30,25 @@ export async function tumSatisFaturalar({ gorunum = 'aktif' } = {}) {
                   WHERE iad.kaynak_fatura_id = f.id
                     AND iad.fatura_tipi = 'iade'
                     AND COALESCE(iad.arsivlendi, 0) = 0) AS iade_sayisi,
+                    (SELECT COALESCE(SUM(iad.adet * iad.birim_fiyat), 0)
+   FROM satis_fatura_detaylari iad
+   JOIN satis_faturalar iadf ON iadf.id = iad.fatura_id
+  WHERE iadf.kaynak_fatura_id = f.id
+    AND iadf.fatura_tipi = 'iade'
+    AND iadf.arsivlendi = 0) AS iade_toplam,
+                    CASE WHEN f.fatura_tipi = 'normal' 
+  AND (SELECT COALESCE(SUM(iad.adet), 0)
+         FROM satis_fatura_detaylari iad
+         JOIN satis_faturalar iadf ON iadf.id = iad.fatura_id
+        WHERE iadf.kaynak_fatura_id = f.id 
+          AND iadf.fatura_tipi = 'iade' 
+          AND iadf.arsivlendi = 0
+      ) >= (
+        SELECT COALESCE(SUM(d2.adet), 0)
+          FROM satis_fatura_detaylari d2 
+         WHERE d2.fatura_id = f.id
+      ) - 0.01
+  THEN 1 ELSE 0 END AS tamamen_iade,
                c.unvan AS cari_unvan,
                COUNT(d.id) AS kalem_sayisi,
                COALESCE(SUM(d.adet * d.birim_fiyat), 0) AS toplam
@@ -66,6 +85,19 @@ export async function satisFaturaGetir(id) {
         (s, k) => s + Number(k.adet) * Number(k.birim_fiyat),
         0
     );
+
+    // YENİ: Bu faturaya kesilen iadelerin toplam tutarı
+    const iadeRows = await query(
+        `SELECT COALESCE(SUM(iad.adet * iad.birim_fiyat), 0) AS iade_toplam
+           FROM satis_fatura_detaylari iad
+           JOIN satis_faturalar iadf ON iadf.id = iad.fatura_id
+          WHERE iadf.kaynak_fatura_id = ?
+            AND iadf.fatura_tipi = 'iade'
+            AND iadf.arsivlendi = 0`,
+        [id]
+    );
+    fatura.iade_toplam = Number(iadeRows[0]?.iade_toplam ?? 0);
+
     return fatura;
 }
 
@@ -330,6 +362,54 @@ export async function satisIadeFaturaOlustur({ kaynak_fatura_id, tarih, kalemler
                 [k.adet, k.urun_id]
             );
         }
+
+        // Otomatik kapanış kontrolü — net borç 0 ise
+        const borcRows = await conn.query(`
+    SELECT 
+      COALESCE(SUM(
+        (SELECT COALESCE(SUM(d.adet * d.birim_fiyat), 0)
+           FROM satis_fatura_detaylari d WHERE d.fatura_id = f.id)
+        - COALESCE(f.odenen_tutar, 0)
+      ), 0) AS normal_borc,
+      (SELECT COALESCE(SUM(iad.adet * iad.birim_fiyat), 0)
+         FROM satis_fatura_detaylari iad
+         JOIN satis_faturalar iadf ON iadf.id = iad.fatura_id
+        WHERE iadf.cari_id = ?
+          AND iadf.fatura_tipi = 'iade'
+          AND iadf.arsivlendi = 0
+          AND NOT EXISTS (
+            SELECT 1 FROM fatura_odemeleri fo
+             WHERE fo.fatura_id = iadf.id 
+               AND fo.fatura_tipi = 'satis'
+          )
+      ) AS odenmemis_iade
+      FROM satis_faturalar f
+     WHERE f.cari_id = ?
+       AND f.fatura_tipi = 'normal'
+       AND f.arsivlendi = 0
+       AND f.durum IN ('odenmedi', 'kismi')
+`, [kaynak.cari_id, kaynak.cari_id]);
+
+        const normalBorc = Number(borcRows[0]?.normal_borc ?? 0);
+        const odenmemisIade = Number(borcRows[0]?.odenmemis_iade ?? 0);
+        const netBorc = Math.max(0, normalBorc - odenmemisIade);
+
+        if (netBorc <= 0.01) {
+            const iadeToplam = kalemler.reduce(
+                (s, k) => s + Number(k.adet) * Number(k.birim_fiyat), 0
+            );
+            // Ödeme kaydı (kasadan düşülmez)
+            await conn.query(
+                `INSERT INTO fatura_odemeleri
+         (fatura_tipi, fatura_id, tutar, tarih, aciklama, kasadan_dus, kasa_id)
+       VALUES ('satis', ?, ?, ?, 'Otomatik kapanış', 0, NULL)`,
+                [yeniFaturaId, iadeToplam, tarih]
+            );
+            await conn.query(
+                `UPDATE satis_faturalar SET odenen_tutar = ?, durum = 'odendi' WHERE id = ?`,
+                [iadeToplam, yeniFaturaId]
+            );
+        }
         await conn.commit();
         return yeniFaturaId;
     } catch (err) {
@@ -357,12 +437,12 @@ export async function satisIadeOdemeEkle(faturaId, veri) {
 
         // İade faturasını kilitle
         const faturaRows = await conn.query(
-            `SELECT f.id, f.odenen_tutar, f.fatura_tipi,
+            `SELECT f.id, f.cari_id, f.odenen_tutar, f.fatura_tipi,
               COALESCE(SUM(d.adet * d.birim_fiyat), 0) AS toplam
          FROM satis_faturalar f
          LEFT JOIN satis_fatura_detaylari d ON d.fatura_id = f.id
         WHERE f.id = ?
-        GROUP BY f.id, f.odenen_tutar, f.fatura_tipi
+        GROUP BY f.id, f.cari_id, f.odenen_tutar, f.fatura_tipi
         FOR UPDATE`,
             [faturaId]
         );
@@ -382,34 +462,28 @@ export async function satisIadeOdemeEkle(faturaId, veri) {
             );
         }
 
-        // Kasa bakiyesi kontrolü (her zaman kasadan düşülecek)
-        if (!veri.kasa_id) throw new Error('Kasa seçilmelidir.');
+        const mahsup = veri.tip === 'mahsup';
 
-        const kasaRows = await conn.query(
-            'SELECT bakiye FROM kasa_bakiye_view WHERE id = ? FOR UPDATE',
-            [veri.kasa_id]
-        );
-        const kasa = kasaRows[0];
-        if (!kasa) throw new Error('Kasa bulunamadı.');
-        if (Number(kasa.bakiye) < Number(veri.tutar)) {
-            throw new Error(
-                `Yetersiz kasa bakiyesi. Mevcut: ${Number(kasa.bakiye).toFixed(2)} ₺`
-            );
-        }
-
-        // Ödeme kaydı — fatura_tipi 'satis' (iade de olsa satış tarafında)
+        // Ödeme kaydı
         await conn.query(
             `INSERT INTO fatura_odemeleri
-         (fatura_tipi, fatura_id, tutar, tarih, aciklama, kasadan_dus, kasa_id)
-       VALUES ('satis', ?, ?, ?, ?, 1, ?)`,
-            [faturaId, veri.tutar, veri.tarih, veri.aciklama ?? null, veri.kasa_id]
+             (fatura_tipi, fatura_id, tutar, tarih, aciklama, kasadan_dus, kasa_id)
+           VALUES ('satis', ?, ?, ?, ?, ?, ?)`,
+            [
+                faturaId,
+                veri.tutar,
+                veri.tarih,
+                veri.aciklama ?? null,
+                mahsup ? 0 : 1,
+                mahsup ? null : veri.kasa_id,
+            ]
         );
 
-        // İade faturasının ödenen tutarını güncelle — durum her zaman 'odendi'
+        // İade faturasının ödenen tutarını güncelle
         await conn.query(
             `UPDATE satis_faturalar
-          SET odenen_tutar = ?, durum = 'odendi'
-        WHERE id = ?`,
+              SET odenen_tutar = ?, durum = 'odendi'
+            WHERE id = ?`,
             [yeniOdenen, faturaId]
         );
 
@@ -421,4 +495,38 @@ export async function satisIadeOdemeEkle(faturaId, veri) {
     } finally {
         conn.release();
     }
+}
+
+// Müşterinin toplam borcunu hesapla
+export async function musteriBorcuGetir(cariId) {
+    const rows = await query(`
+        SELECT 
+          COALESCE(SUM(
+            (SELECT COALESCE(SUM(d.adet * d.birim_fiyat), 0)
+               FROM satis_fatura_detaylari d WHERE d.fatura_id = f.id)
+            - COALESCE(f.odenen_tutar, 0)
+          ), 0) AS normal_borc,
+          (SELECT COALESCE(SUM(iad.adet * iad.birim_fiyat), 0)
+             FROM satis_fatura_detaylari iad
+             JOIN satis_faturalar iadf ON iadf.id = iad.fatura_id
+            WHERE iadf.cari_id = ?
+              AND iadf.fatura_tipi = 'iade'
+              AND iadf.arsivlendi = 0
+              AND NOT EXISTS (
+                SELECT 1 FROM fatura_odemeleri fo
+                 WHERE fo.fatura_id = iadf.id 
+                   AND fo.fatura_tipi = 'satis'
+              )
+          ) AS odenmemis_iade
+          FROM satis_faturalar f
+         WHERE f.cari_id = ?
+           AND f.fatura_tipi = 'normal'
+           AND f.arsivlendi = 0
+           AND f.durum IN ('odenmedi', 'kismi')
+    `, [cariId, cariId]);
+
+    const normalBorc = Number(rows[0]?.normal_borc ?? 0);
+    const odenmemisIade = Number(rows[0]?.odenmemis_iade ?? 0);
+
+    return Math.max(0, normalBorc - odenmemisIade);
 }

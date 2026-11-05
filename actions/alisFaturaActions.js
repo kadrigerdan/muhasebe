@@ -96,8 +96,6 @@ export async function alisIadeFaturaAction(prevState, formData) {
     const kaynak_fatura_id = Number(formData.get('kaynak_fatura_id'));
     const tarih = formData.get('tarih');
 
-    console.log('DEBUG alisIadeFaturaAction:', { kaynak_fatura_id, tarih });
-
     if (!Number.isFinite(kaynak_fatura_id) || kaynak_fatura_id <= 0) {
         return { error: 'Kaynak fatura geçersiz.' };
     }
@@ -217,6 +215,32 @@ export async function alisFaturaGeriAlAction(id) {
     } catch (err) {
         console.error('alisFaturaGeriAl:', err);
         return { error: 'Geri alınamadı.' };
+    }
+}
+
+export async function alisFaturaMahsupAction(prevState, formData) {
+    const fatura_id = Number(formData.get('fatura_id'));
+    const tutar = Number(formData.get('tutar'));
+    const tarih = formData.get('tarih');
+
+    if (!Number.isFinite(fatura_id) || fatura_id <= 0) {
+        return { error: 'Fatura seçilmelidir.' };
+    }
+    if (!Number.isFinite(tutar) || tutar <= 0) {
+        return { error: 'Tutar 0 olamaz.' };
+    }
+    if (!tarih) return { error: 'Tarih zorunludur.' };
+
+    try {
+        const { alisFaturaMahsupEkle } = await import('@/models/alisFaturaModel');
+        await alisFaturaMahsupEkle(fatura_id, { tutar, tarih });
+        revalidatePath('/alis-faturalar');
+        revalidatePath(`/alis-faturalar/${fatura_id}`);
+        revalidatePath('/cariler');
+        return { ok: true };
+    } catch (err) {
+        console.error('alisFaturaMahsup:', err);
+        return { error: err.message || 'Mahsup kaydedilemedi.' };
     }
 }
 

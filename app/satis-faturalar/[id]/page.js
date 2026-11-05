@@ -8,6 +8,8 @@ import ArsivleButonu from '@/components/ArsivleButonu';
 import GeriAlButonu from '@/components/GeriAlButonu';
 import { satisFaturaArsivleAction, satisFaturaGeriAlAction } from '@/actions/satisFaturaActions';
 import IadeOdemeForm from '@/components/satis-fatura/IadeOdemeForm';
+import { musteriBorcuGetir } from '@/models/satisFaturaModel';
+
 
 export const dynamic = 'force-dynamic';
 
@@ -23,9 +25,11 @@ export default async function SatisFaturaDetayPage({ params }) {
 
   const toplam = Number(fatura.toplam);
   const odenen = Number(fatura.odenen_tutar ?? 0);
-  const kalan = toplam - odenen;
+  const iadeToplam = Number(fatura.iade_toplam ?? 0);
+  const kalan = Math.max(0, toplam - odenen - iadeToplam);
   const iade = fatura.fatura_tipi === 'iade';
   const arsivli = Number(fatura.arsivlendi) === 1;
+  const musteriBorc = iade ? await musteriBorcuGetir(fatura.cari_id) : 0;
 
   const durumRenk = {
     odenmedi: 'bg-red-100 text-red-700',
@@ -138,39 +142,32 @@ export default async function SatisFaturaDetayPage({ params }) {
         </div>
 
         <div>
-          <b>Kalan:</b>{' '}
-          {iade ? (
-            kalan > 0.01 ? (
-              <span className="text-blue-700 font-bold">
-                {paraFormat(kalan)} ₺ alacak
+          <div>
+            <b>Durum:</b>{' '}
+            {iade ? (
+              kalan > 0.01 ? (
+                <span className="text-xs px-2 py-0.5 rounded bg-blue-100 text-blue-700">
+                  İade (Alacak)
+                </span>
+              ) : (
+                <span className="text-xs px-2 py-0.5 rounded bg-green-100 text-green-700">
+                  İade ✓ Ödendi
+                </span>
+              )
+            ) : iadeToplam > 0.01 && kalan > 0.01 ? (
+              <span className="text-xs px-2 py-0.5 rounded bg-orange-100 text-orange-700">
+                Kısmi İade
+              </span>
+            ) : iadeToplam > 0.01 && kalan <= 0.01 ? (
+              <span className="text-xs px-2 py-0.5 rounded bg-purple-100 text-purple-700">
+                İade ile Kapandı
               </span>
             ) : (
-              <span className="text-green-700 font-bold">✓ Ödendi</span>
-            )
-          ) : (
-            <span className={kalan > 0.01 ? 'text-red-700 font-bold' : 'text-green-700 font-bold'}>
-              {kalan > 0.01 ? paraFormat(kalan) + ' ₺' : '✓ Ödendi'}
-            </span>
-          )}
-        </div>
-
-        <div>
-          <b>Durum:</b>{' '}
-          {iade ? (
-            kalan > 0.01 ? (
-              <span className="text-xs px-2 py-0.5 rounded bg-blue-100 text-blue-700">
-                İade (Alacak)
+              <span className={`text-xs px-2 py-0.5 rounded ${durumRenk[fatura.durum] || 'bg-gray-100'}`}>
+                {durumEtiket[fatura.durum] || fatura.durum}
               </span>
-            ) : (
-              <span className="text-xs px-2 py-0.5 rounded bg-green-100 text-green-700">
-                İade ✓ Ödendi
-              </span>
-            )
-          ) : (
-            <span className={`text-xs px-2 py-0.5 rounded ${durumRenk[fatura.durum] || 'bg-gray-100'}`}>
-              {durumEtiket[fatura.durum] || fatura.durum}
-            </span>
-          )}
+            )}
+          </div>
         </div>
       </div>
 
@@ -178,9 +175,20 @@ export default async function SatisFaturaDetayPage({ params }) {
       {!iade && !arsivli && (
         <TahsilatForm faturaId={id} kalan={kalan} kasaHesaplari={kasaHesaplari} />
       )}
-      {iade && !arsivli && (
-        <IadeOdemeForm faturaId={id} kalan={kalan} kasaHesaplari={kasaHesaplari} />
+      {iade && !arsivli && kalan > 0.01 && (
+        <IadeOdemeForm
+          faturaId={id}
+          kalan={kalan}
+          kasaHesaplari={kasaHesaplari}
+          musteriBorc={musteriBorc}
+        />
       )}
+      {iade && !arsivli && kalan <= 0.01 && (
+        <div className="border rounded p-4 bg-green-50 text-green-700 text-sm">
+          ✓ Bu iade faturası otomatik kapandı (cari borç sıfırlandı).
+        </div>
+      )}
+
 
       {/* KALEMLER */}
       <table className="w-full border-collapse border text-sm">

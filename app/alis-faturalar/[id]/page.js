@@ -8,9 +8,9 @@ import { paraFormat } from '@/lib/format';
 import ArsivleButonu from '@/components/ArsivleButonu';
 import GeriAlButonu from '@/components/GeriAlButonu';
 import {
-  alisFaturaArsivleAction,
-  alisFaturaGeriAlAction,
+  alisFaturaArsivleAction, alisFaturaGeriAlAction,
 } from '@/actions/alisFaturaActions';
+import { alisFaturaMahsupAction } from '@/actions/alisFaturaActions';
 
 export const dynamic = 'force-dynamic';
 
@@ -26,7 +26,8 @@ export default async function AlisFaturaDetayPage({ params }) {
 
   const toplam = Number(fatura.toplam);
   const odenen = Number(fatura.odenen_tutar ?? 0);
-  const kalan = toplam - odenen;
+  const iadeToplam = Number(fatura.iade_toplam ?? 0);
+  const kalan = Math.max(0, toplam - odenen - iadeToplam);
   const iade = fatura.fatura_tipi === 'iade';
   const arsivli = Number(fatura.arsivlendi) === 1;
 
@@ -103,6 +104,13 @@ export default async function AlisFaturaDetayPage({ params }) {
             </Link>
           )}
 
+          {fatura.iade_kullanilabilir > 0.01 && (
+            <div className="bg-blue-50 border border-blue-200 p-3 rounded text-sm">
+              💰 Bu cariye ait <b>{paraFormat(fatura.iade_kullanilabilir)} ₺</b> iade alacağı var.
+              <button>Bu faturaya mahsup et</button>
+            </div>
+          )}
+
           <Link
             href={`/alis-faturalar/${id}/yazdir`}
             className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 text-sm"
@@ -158,22 +166,32 @@ export default async function AlisFaturaDetayPage({ params }) {
         </div>
 
         <div>
-          <b>Durum:</b>{' '}
-          {iade ? (
-            kalan > 0.01 ? (
-              <span className="text-xs px-2 py-0.5 rounded bg-blue-100 text-blue-700">
-                İade (Alacak)
+          <div>
+            <b>Durum:</b>{' '}
+            {iade ? (
+              kalan > 0.01 ? (
+                <span className="text-xs px-2 py-0.5 rounded bg-blue-100 text-blue-700">
+                  İade (Alacak)
+                </span>
+              ) : (
+                <span className="text-xs px-2 py-0.5 rounded bg-green-100 text-green-700">
+                  İade ✓ Ödendi
+                </span>
+              )
+            ) : iadeToplam > 0.01 && kalan > 0.01 ? (
+              <span className="text-xs px-2 py-0.5 rounded bg-orange-100 text-orange-700">
+                Kısmi İade
+              </span>
+            ) : iadeToplam > 0.01 && kalan <= 0.01 ? (
+              <span className="text-xs px-2 py-0.5 rounded bg-purple-100 text-purple-700">
+                İade ile Kapandı
               </span>
             ) : (
-              <span className="text-xs px-2 py-0.5 rounded bg-green-100 text-green-700">
-                İade ✓ Ödendi
+              <span className={`text-xs px-2 py-0.5 rounded ${durumRenk[fatura.durum] || 'bg-gray-100'}`}>
+                {durumEtiket[fatura.durum] || fatura.durum}
               </span>
-            )
-          ) : (
-            <span className={`text-xs px-2 py-0.5 rounded ${durumRenk[fatura.durum] || 'bg-gray-100'}`}>
-              {durumEtiket[fatura.durum] || fatura.durum}
-            </span>
-          )}
+            )}
+          </div>
         </div>
       </div>
 
@@ -182,11 +200,53 @@ export default async function AlisFaturaDetayPage({ params }) {
         <OdemeForm faturaId={id} kalan={kalan} kasaHesaplari={kasaHesaplari} />
       )}
 
-      {/* İADE MAHSUP FORMU — iade faturası */}
-      {iade && !arsivli && (
-        <IadeOdemeForm faturaId={id} kalan={kalan} />
+      {!iade && !arsivli && fatura.iade_kullanilabilir > 0.01 && kalan > 0.01 && (
+        <form action={alisFaturaMahsupAction} className="border rounded p-4 bg-blue-50 space-y-3">
+          <h3 className="font-semibold text-blue-900">💰 İade Alacağından Mahsup</h3>
+          <div className="text-xs text-blue-800">
+            Bu cariye ait <b>{paraFormat(fatura.iade_kullanilabilir)} ₺</b> iade alacağı var.
+          </div>
+          <input type="hidden" name="fatura_id" value={id} />
+          <div className="grid grid-cols-3 gap-3">
+            <div>
+              <label className="block text-sm font-medium mb-1">Mahsup Tutarı</label>
+              <input
+                type="number"
+                name="tutar"
+                step="0.01"
+                min="0.01"
+                max={Math.min(fatura.iade_kullanilabilir, kalan)}
+                defaultValue={Math.min(fatura.iade_kullanilabilir, kalan).toFixed(2)}
+                required
+                className="w-full border rounded px-3 py-2"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Tarih</label>
+              <input
+                type="date"
+                name="tarih"
+                required
+                defaultValue={new Date().toISOString().slice(0, 10)}
+                className="w-full border rounded px-3 py-2"
+              />
+            </div>
+            <div className="flex items-end">
+              <button
+                type="submit"
+                className="w-full bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+              >
+                Mahsup Et
+              </button>
+            </div>
+          </div>
+        </form>
       )}
 
+      {/* İADE MAHSUP FORMU — iade faturası */}
+      {iade && !arsivli && kalan > 0.01 && (
+        <IadeOdemeForm faturaId={id} kalan={kalan} />
+      )}
       {/* KALEMLER */}
       <table className="w-full border-collapse border text-sm">
         <thead className="bg-gray-100">

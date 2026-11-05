@@ -27,7 +27,8 @@ export default function SatisFaturaList({ faturalar = [] }) {
         {faturalar.map((f) => {
           const toplam = Number(f.toplam);
           const odenen = Number(f.odenen_tutar ?? 0);
-          const kalan = toplam - odenen;
+          const iadeToplam = Number(f.iade_toplam ?? 0);
+          const kalan = Math.max(0, toplam - odenen - iadeToplam);
           const arsivli = Number(f.arsivlendi) === 1;
           const iade = f.fatura_tipi === 'iade';
 
@@ -106,19 +107,23 @@ export default function SatisFaturaList({ faturalar = [] }) {
                 ) : (
                   <>
                     {f.durum === 'odendi' && (
-                      <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded">
-                        Ödendi
-                      </span>
+                      <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded">Ödendi</span>
                     )}
                     {f.durum === 'kismi' && (
-                      <span className="text-xs bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded">
-                        Kısmi
+                      <span className="text-xs bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded">Kısmi</span>
+                    )}
+                    {f.durum === 'odenmedi' && Number(f.tamamen_iade) === 1 && (
+                      <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded">
+                        İade ile Kapandı
                       </span>
                     )}
-                    {f.durum === 'odenmedi' && (
-                      <span className="text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded">
-                        Ödenmedi
+                    {f.durum === 'odenmedi' && Number(f.tamamen_iade) !== 1 && Number(f.iade_sayisi) > 0 && (
+                      <span className="text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded">
+                        Kısmi İade
                       </span>
+                    )}
+                    {f.durum === 'odenmedi' && Number(f.tamamen_iade) !== 1 && Number(f.iade_sayisi) === 0 && (
+                      <span className="text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded">Ödenmedi</span>
                     )}
                   </>
                 )}

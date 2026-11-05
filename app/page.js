@@ -11,15 +11,14 @@ export const dynamic = 'force-dynamic';
 export default async function AnaSayfa() {
 
   const [
-    cariArr, urunArr, personelArr, stokArr, kritikArr, tukenenArr,
+    cariArr, urunArr, personelArr, stokArr, kritikArr,
     alisArr, satisArr, kasaTip, kasaGenel, restoranOzet, bildirimData,
   ] = await Promise.all([
     query('SELECT COUNT(*) AS toplam FROM cariler WHERE aktif = 1'),
     query('SELECT COUNT(*) AS toplam FROM urunler WHERE durum = 1'),
     query('SELECT COUNT(*) AS toplam FROM personel WHERE aktif = 1'),
     query('SELECT COALESCE(SUM(stok * varsayilan_alis_fiyati), 0) AS deger FROM urunler WHERE durum = 1'),
-    query('SELECT COUNT(*) AS toplam FROM urunler WHERE durum = 1 AND stok > 0 AND stok <= kritik_seviye'),
-    query('SELECT COUNT(*) AS toplam FROM urunler WHERE durum = 1 AND stok <= 0'),
+    query('SELECT COUNT(*) AS toplam FROM urunler WHERE durum = 1 AND kritik_seviye IS NOT NULL AND stok <= kritik_seviye'),
     query('SELECT COALESCE(SUM(d.miktar * d.birim_fiyat), 0) AS toplam FROM alis_faturalar f JOIN alis_fatura_detaylari d ON d.fatura_id = f.id'),
     query('SELECT COALESCE(SUM(d.adet * d.birim_fiyat), 0) AS toplam FROM satis_faturalar f JOIN satis_fatura_detaylari d ON d.fatura_id = f.id'),
     kasaTipOzet(),
@@ -36,7 +35,6 @@ export default async function AnaSayfa() {
   const personelSayi = personelArr[0] ?? { toplam: 0 };
   const stokDeger = stokArr[0] ?? { deger: 0 };
   const kritikSayi = kritikArr[0] ?? { toplam: 0 };
-  const tukenenSayi = tukenenArr[0] ?? { toplam: 0 };
   const alisToplam = Number(alisArr[0]?.toplam ?? 0);
   const satisToplam = Number(satisArr[0]?.toplam ?? 0);
   const kar = satisToplam - alisToplam;
@@ -46,7 +44,41 @@ export default async function AnaSayfa() {
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-2">
       <h1 className="text-3xl font-bold">Muhasebe Paneli </h1>
-      <Bildirimler bildirimler={bildirimData} />
+      <div className='grid grid-cols-2 md:grid-cols-1'>
+        <div>
+          {/* KRİTİK STOK ŞERİDİ */}
+          {bildirimData.kritikStok?.length > 0 && (
+            <div className="border rounded-lg bg-yellow-50 px-3 py-2 flex items-center gap-2 overflow-hidden">
+              <span className="text-xs font-semibold text-yellow-900 whitespace-nowrap">
+                ⚠️ Kritik ({bildirimData.kritikStok.length}):
+              </span>
+              <div className="flex gap-1.5 overflow-x-auto flex-1 py-0.5">
+                {bildirimData.kritikStok.map((u) => {
+                  const tukenmis = Number(u.stok) <= 0;
+                  return (
+                    <span
+                      key={u.id}
+                      className={`text-xs px-2 py-0.5 rounded-full whitespace-nowrap ${tukenmis
+                        ? 'bg-red-100 text-red-900'
+                        : 'bg-white text-yellow-900 border border-yellow-300'
+                        }`}
+                    >
+                      {tukenmis ? '🚫' : '⚠️'} {u.urun_adi}{' '}
+                      <b className={tukenmis ? 'text-red-700' : 'text-yellow-700'}>{u.stok}</b>
+                    </span>
+                  );
+                })}
+              </div>
+              <Link
+                href="/stok"
+                className="text-xs text-blue-600 hover:underline whitespace-nowrap"
+              >
+                Tümü →
+              </Link>
+            </div>
+          )}
+        </div>
+      </div>
       {/* KASA DURUMU */}
       <div>
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-gray-900">
@@ -85,6 +117,7 @@ export default async function AnaSayfa() {
             </div>
           </Link>
         </div>
+
       </div>
 
 
@@ -129,13 +162,6 @@ export default async function AnaSayfa() {
       {/* RESTORAN DURUMU */}
       <div>
         <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
-          <Link href="/stok" className="border rounded-lg p-4 bg-red-50 hover:shadow-md transition">
-            <div className="text-xs text-red-900 mb-1">Tükenen Ürün</div>
-            <div className="text-2xl font-bold text-red-900">
-              {sayiFormat(tukenenSayi.toplam)}
-            </div>
-          </Link>
-
           <Link href="/stok" className="border rounded-lg p-4 bg-yellow-50 hover:shadow-md transition">
             <div className="text-xs text-yellow-950 mb-1">Kritik Stok</div>
             <div className="text-2xl font-bold text-yellow-900">

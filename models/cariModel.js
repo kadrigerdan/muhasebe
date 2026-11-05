@@ -156,62 +156,73 @@ export async function cariEkstre(cariId) {
 // -------- CARİ BAKİYE ÖZETİ --------
 export async function cariBakiyeListesi() {
     return await query(
-        `SELECT
+        `SELECT 
            c.id, c.unvan, c.tip, c.telefon, c.adres,
-           GREATEST(0, COALESCE(s.satis_toplam, 0) - COALESCE(s.tahsilat, 0) - COALESCE(s.iade, 0) + COALESCE(s.iade_odenen, 0)) AS toplam_borc,
-           GREATEST(0, COALESCE(a.alis_toplam, 0) - COALESCE(a.odeme, 0) - COALESCE(a.iade, 0) + COALESCE(a.iade_odenen, 0)) AS toplam_alacak,
-           (COALESCE(s.satis_toplam, 0) - COALESCE(s.tahsilat, 0) - COALESCE(s.iade, 0) + COALESCE(s.iade_odenen, 0))
-           - (COALESCE(a.alis_toplam, 0) - COALESCE(a.odeme, 0) - COALESCE(a.iade, 0) + COALESCE(a.iade_odenen, 0)) AS bakiye
+           b.satis_net, b.alis_net,
+           b.bakiye,
+           GREATEST(0, b.bakiye) AS toplam_borc,
+           GREATEST(0, -b.bakiye) AS toplam_alacak
          FROM cariler c
          LEFT JOIN (
-           SELECT f.cari_id,
-                  SUM(CASE WHEN f.fatura_tipi = 'normal' THEN (d.adet * d.birim_fiyat) ELSE 0 END) AS satis_toplam,
-                  SUM(CASE WHEN f.fatura_tipi = 'iade' THEN (d.adet * d.birim_fiyat) ELSE 0 END) AS iade,
-                  (SELECT COALESCE(SUM(fo.tutar), 0)
-                     FROM fatura_odemeleri fo
-                     JOIN satis_faturalar sf ON sf.id = fo.fatura_id
-                    WHERE fo.fatura_tipi = 'satis'
-                      AND sf.fatura_tipi = 'normal'
-                      AND sf.arsivlendi = 0
-                      AND sf.cari_id = f.cari_id
-                  ) AS tahsilat,
-                  (SELECT COALESCE(SUM(fo.tutar), 0)
-                     FROM fatura_odemeleri fo
-                     JOIN satis_faturalar sf ON sf.id = fo.fatura_id
-                    WHERE fo.fatura_tipi = 'satis'
-                      AND sf.fatura_tipi = 'iade'
-                      AND sf.arsivlendi = 0
-                      AND sf.cari_id = f.cari_id
-                  ) AS iade_odenen
-             FROM satis_faturalar f
-             JOIN satis_fatura_detaylari d ON d.fatura_id = f.id
-            WHERE f.arsivlendi = 0
-            GROUP BY f.cari_id
-         ) s ON s.cari_id = c.id
-         LEFT JOIN (
-           SELECT f.cari_id,
-                  SUM(CASE WHEN f.fatura_tipi = 'normal' THEN (d.miktar * d.birim_fiyat) ELSE 0 END) AS alis_toplam,
-                  SUM(CASE WHEN f.fatura_tipi = 'iade' THEN (d.miktar * d.birim_fiyat) ELSE 0 END) AS iade,
-                  (SELECT COALESCE(SUM(fo.tutar), 0)
-                     FROM fatura_odemeleri fo
-                     JOIN alis_faturalar af ON af.id = fo.fatura_id
-                    WHERE fo.fatura_tipi = 'alis'
-                      AND af.fatura_tipi = 'normal'
-                      AND af.arsivlendi = 0
-                      AND af.cari_id = f.cari_id
-                  ) AS odeme,
-                  (SELECT COALESCE(SUM(fo.tutar), 0)
-                     FROM fatura_odemeleri fo
-                     JOIN alis_faturalar af ON af.id = fo.fatura_id
-                    WHERE fo.fatura_tipi = 'alis'
-                      AND af.fatura_tipi = 'iade'
-                      AND af.arsivlendi = 0
-                      AND af.cari_id = f.cari_id
-                  ) AS iade_odenen
-             FROM alis_faturalar f
-             JOIN alis_fatura_detaylari d ON d.fatura_id = f.id
-            WHERE f.arsivlendi = 0
-            GROUP BY f.cari_id
-         ) a ON a.cari_id = c.id`
+           SELECT 
+             x.id AS cari_id,
+             (COALESCE(s.satis_toplam,0) - COALESCE(s.tahsilat,0) - COALESCE(s.iade,0) + COALESCE(s.para_iade,0)) AS satis_net,
+             (COALESCE(a.alis_toplam,0) - COALESCE(a.odeme,0) - COALESCE(a.iade,0) + COALESCE(a.para_iade,0)) AS alis_net,
+             (COALESCE(s.satis_toplam,0) - COALESCE(s.tahsilat,0) - COALESCE(s.iade,0) + COALESCE(s.para_iade,0))
+             - (COALESCE(a.alis_toplam,0) - COALESCE(a.odeme,0) - COALESCE(a.iade,0) + COALESCE(a.para_iade,0)) AS bakiye
+           FROM cariler x
+           LEFT JOIN (
+             SELECT f.cari_id,
+                    SUM(CASE WHEN f.fatura_tipi = 'normal' THEN (d.adet * d.birim_fiyat) ELSE 0 END) AS satis_toplam,
+                    SUM(CASE WHEN f.fatura_tipi = 'iade' THEN (d.adet * d.birim_fiyat) ELSE 0 END) AS iade,
+                    (SELECT COALESCE(SUM(fo.tutar), 0)
+                       FROM fatura_odemeleri fo
+                       JOIN satis_faturalar sf ON sf.id = fo.fatura_id
+                      WHERE fo.fatura_tipi = 'satis'
+                        AND sf.fatura_tipi = 'normal'
+                        AND sf.arsivlendi = 0
+                        AND sf.cari_id = f.cari_id
+                    ) AS tahsilat,
+                    (SELECT COALESCE(SUM(fo.tutar), 0)
+                       FROM fatura_odemeleri fo
+                       JOIN satis_faturalar sf ON sf.id = fo.fatura_id
+                      WHERE fo.fatura_tipi = 'satis'
+                        AND sf.fatura_tipi = 'iade'
+                        AND sf.arsivlendi = 0
+                        AND fo.kasadan_dus = 1
+                        AND sf.cari_id = f.cari_id
+                    ) AS para_iade
+               FROM satis_faturalar f
+               JOIN satis_fatura_detaylari d ON d.fatura_id = f.id
+              WHERE f.arsivlendi = 0
+              GROUP BY f.cari_id
+           ) s ON s.cari_id = x.id
+           LEFT JOIN (
+             SELECT f.cari_id,
+                    SUM(CASE WHEN f.fatura_tipi = 'normal' THEN (d.miktar * d.birim_fiyat) ELSE 0 END) AS alis_toplam,
+                    SUM(CASE WHEN f.fatura_tipi = 'iade' THEN (d.miktar * d.birim_fiyat) ELSE 0 END) AS iade,
+                    (SELECT COALESCE(SUM(fo.tutar), 0)
+                       FROM fatura_odemeleri fo
+                       JOIN alis_faturalar af ON af.id = fo.fatura_id
+                      WHERE fo.fatura_tipi = 'alis'
+                        AND af.fatura_tipi = 'normal'
+                        AND af.arsivlendi = 0
+                        AND af.cari_id = f.cari_id
+                    ) AS odeme,
+                    (SELECT COALESCE(SUM(fo.tutar), 0)
+                       FROM fatura_odemeleri fo
+                       JOIN alis_faturalar af ON af.id = fo.fatura_id
+                      WHERE fo.fatura_tipi = 'alis'
+                        AND af.fatura_tipi = 'iade'
+                        AND af.arsivlendi = 0
+                        AND fo.kasadan_dus = 1
+                        AND af.cari_id = f.cari_id
+                    ) AS para_iade
+               FROM alis_faturalar f
+               JOIN alis_fatura_detaylari d ON d.fatura_id = f.id
+              WHERE f.arsivlendi = 0
+              GROUP BY f.cari_id
+           ) a ON a.cari_id = x.id
+         ) b ON b.cari_id = c.id`
     );
 }

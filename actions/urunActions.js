@@ -6,14 +6,15 @@ import {
 } from '@/models/urunModel';
 
 function formVerisiniAl(formData) {
+    const kritikRaw = formData.get('kritik_seviye');   // ← dışarıda değişken
     return {
         urun_adi: formData.get('urun_adi')?.trim(),
         tip: formData.get('tip') || 'hammadde',
-        kritik_seviye: Number(formData.get('kritik_seviye')) || 10,
+        kritik_seviye: kritikRaw === '' || kritikRaw === null ? null : Number(kritikRaw),
         varsayilan_alis_fiyati: Number(formData.get('varsayilan_alis_fiyati')) || 0,
         varsayilan_satis_fiyati: Number(formData.get('varsayilan_satis_fiyati')) || 0,
         durum: formData.get('durum') === 'on' ? 1 : 0,
-        stok: Number(formData.get('stok')) || 0,      // ← YENİ
+        stok: Number(formData.get('stok')) || 0,
     };
 }
 

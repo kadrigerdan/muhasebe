@@ -66,7 +66,7 @@ export default function UrunForm({ initial, onSuccess }) {
                 <div>
                     <label className="block font-medium mb-1">Kritik Seviye</label>
                     <input type="number" name="kritik_seviye" min="0"
-                        defaultValue={initial?.kritik_seviye ?? 10}
+                        defaultValue={initial?.kritik_seviye ?? ''}
                         className="w-full border rounded px-3 py-2" />
                     <div className="text-xs text-gray-500 mt-1">
                         Stok bu seviyeye düşünce uyarı verir

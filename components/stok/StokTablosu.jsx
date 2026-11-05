@@ -31,7 +31,8 @@ export function StokTablosu() {
     return urunler.filter((u) => {
       const eslesme = !q || u.urun_adi?.toLocaleLowerCase("tr").includes(q);
       const kritik = u.tip === 'hammadde'
-        && Number(u.stok) <= Number(u.kritik_seviye ?? 0);
+        && u.kritik_seviye !== null
+        && Number(u.stok) <= Number(u.kritik_seviye);
       return eslesme && (!sadeceKritik || kritik);
     });
   }, [arama, sadeceKritik, urunler]);
@@ -39,7 +40,7 @@ export function StokTablosu() {
 
   const kritikSayi = useMemo(
     () => urunler.filter((u) =>
-      u.tip === 'hammadde' && Number(u.stok) <= Number(u.kritik_seviye ?? 0)
+      u.kritik_seviye !== null && Number(u.stok) <= Number(u.kritik_seviye)
     ).length,
     [urunler]
   );
@@ -81,7 +82,8 @@ export function StokTablosu() {
           <tbody>
             {filtreli.map((u) => {
               const kritik = u.tip === 'hammadde'
-                && Number(u.stok) <= Number(u.kritik_seviye ?? 0);
+                && u.kritik_seviye !== null
+                && Number(u.stok) <= Number(u.kritik_seviye);
               return (
                 <tr
                   key={u.id}
@@ -95,7 +97,7 @@ export function StokTablosu() {
                     {paraFormat(u.varsayilan_satis_fiyati)} ₺
                   </td>
                   <td className="px-3 py-2 border text-center">
-                    {u.kritik_seviye ?? 0}
+                    {u.kritik_seviye ?? '—'}
                   </td>
                   <td className="px-3 py-2 border text-center font-semibold">
                     {u.stok}

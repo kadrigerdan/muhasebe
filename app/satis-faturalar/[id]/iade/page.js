@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { satisFaturaGetir, satisFaturaIadeEdilebilir } from '@/models/satisFaturaModel';
+import { query } from '@/database/db';
 import IadeForm from '@/components/satis-fatura/IadeForm';
 
 export const dynamic = 'force-dynamic';
@@ -38,17 +39,41 @@ export default async function SatisIadePage({ params }) {
         );
     }
 
+    // 🔽🔽🔽 SORGU BURAYA — erken return'lerden sonra, JSX'ten önce
+    const musteriBorc = await query(`
+        SELECT COALESCE(SUM(
+          (SELECT COALESCE(SUM(d.adet * d.birim_fiyat), 0)
+             FROM satis_fatura_detaylari d WHERE d.fatura_id = f.id)
+          - COALESCE(f.odenen_tutar, 0)
+        ), 0) AS toplam_borc
+          FROM satis_faturalar f
+         WHERE f.cari_id = ?
+           AND f.fatura_tipi = 'normal'
+           AND f.arsivlendi = 0
+           AND f.durum IN ('odenmedi', 'kismi')
+    `, [fatura.cari_id]);
+
+    const toplamBorc = Number(musteriBorc[0]?.toplam_borc ?? 0);
+
     return (
         <div className="p-6 max-w-4xl mx-auto space-y-4">
             <h1 className="text-2xl font-bold">↩️ Satış İadesi — Fatura #{fatura.id}</h1>
             <div className="text-sm text-gray-600">
                 Müşteri: <b>{fatura.cari_unvan}</b> · Orijinal Tarih:{' '}
                 {new Date(fatura.tarih).toLocaleDateString('tr-TR')}
+                {' · '}
+                <span className="text-gray-700">
+                    Toplam Borç:{' '}
+                    <b className={toplamBorc > 0 ? 'text-red-600' : 'text-green-600'}>
+                        {toplamBorc.toLocaleString('tr-TR', { style: 'currency', currency: 'TRY' })}
+                    </b>
+                </span>
             </div>
             <IadeForm
                 kaynakFaturaId={id}
                 kalemler={kalemler}
                 varsayilanTarih={new Date().toISOString().slice(0, 10)}
+            // istersen: musteriBorc={toplamBorc}  (formda uyarı/limit için)
             />
         </div>
     );

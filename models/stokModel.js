@@ -8,7 +8,7 @@ export async function stokOzet() {
             (u.stok * u.varsayilan_satis_fiyati) AS stok_degeri_satis,
             CASE
               WHEN u.stok <= 0 THEN 'tukendi'
-              WHEN u.stok <= u.kritik_seviye THEN 'kritik'
+              WHEN u.kritik_seviye IS NOT NULL AND u.stok <= u.kritik_seviye THEN 'kritik'
               ELSE 'yeterli'
             END AS durum
        FROM urunler u

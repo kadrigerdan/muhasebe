@@ -175,7 +175,8 @@ export async function satisIadeOdemeAction(prevState, formData) {
     const fatura_id = Number(formData.get('fatura_id'));
     const tutar = Number(formData.get('tutar'));
     const tarih = formData.get('tarih');
-    const kasa_id = Number(formData.get('kasa_id'));
+    const tip = formData.get('tip') === 'para' ? 'para' : 'mahsup';
+    const kasa_id = tip === 'para' ? Number(formData.get('kasa_id')) : null;
     const aciklama = formData.get('aciklama') || null;
 
     if (!Number.isFinite(fatura_id) || fatura_id <= 0) {
@@ -185,18 +186,38 @@ export async function satisIadeOdemeAction(prevState, formData) {
         return { error: 'Tutar 0 olamaz.' };
     }
     if (!tarih) return { error: 'Tarih zorunludur.' };
-    if (!Number.isFinite(kasa_id) || kasa_id <= 0) {
-        return { error: 'Kasa seçilmelidir.' };
+    if (tip === 'para' && (!Number.isFinite(kasa_id) || kasa_id <= 0)) {
+        return { error: 'Para iadesi için kasa seçilmelidir.' };
     }
 
     try {
-        const { satisIadeOdemeEkle } = await import('@/models/satisFaturaModel');
-        await satisIadeOdemeEkle(fatura_id, { tutar, tarih, kasa_id, aciklama });
+        const { satisIadeOdemeEkle, musteriBorcuGetir } = await import('@/models/satisFaturaModel');
+        const { satisFaturaGetir } = await import('@/models/satisFaturaModel');
+
+        // Faturayı çek → cari_id lazım
+        const fatura = await satisFaturaGetir(fatura_id);
+        if (!fatura) return { error: 'Fatura bulunamadı.' };
+
+        // Müşterinin güncel borcunu kontrol et
+        const musteriBorc = await musteriBorcuGetir(fatura.cari_id);
+
+        if (tip === 'mahsup' && musteriBorc <= 0.01) {
+            return { error: 'Müşterinin borcu yok, mahsup yapılamaz. Para iadesi kullanın.' };
+        }
+        if (tip === 'para' && musteriBorc > 0.01) {
+            return {
+                error: `Müşterinin ${musteriBorc.toFixed(2)} ₺ borcu var. Önce mahsup yapın.`,
+            };
+        }
+
+        await satisIadeOdemeEkle(fatura_id, { tutar, tarih, tip, kasa_id, aciklama });
+
         revalidatePath('/satis-faturalar');
         revalidatePath(`/satis-faturalar/${fatura_id}`);
         revalidatePath('/kasa');
         revalidatePath('/kasa/hareketler');
         revalidatePath('/cariler');
+
         return { ok: true };
     } catch (err) {
         console.error('satisIadeOdeme:', err);

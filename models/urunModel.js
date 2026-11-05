@@ -36,7 +36,7 @@ export async function urunOlustur(veri) {
     [
       veri.urun_adi,
       veri.tip ?? 'hammadde',
-      veri.kritik_seviye ?? 10,
+      veri.kritik_seviye ?? null,
       veri.varsayilan_alis_fiyati ?? 0,
       veri.varsayilan_satis_fiyati ?? 0,
       veri.durum ?? 1,
@@ -59,7 +59,7 @@ export async function urunGuncelleDB(id, veri) {
     [
       veri.urun_adi,
       veri.tip ?? 'hammadde',
-      veri.kritik_seviye ?? 10,
+      veri.kritik_seviye ?? null,
       veri.varsayilan_alis_fiyati ?? 0,
       veri.varsayilan_satis_fiyati ?? 0,
       veri.durum ?? 1,

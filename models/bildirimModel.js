@@ -1,68 +1,105 @@
 import { query } from '@/database/db';
 
+async function uzunAdisyonlar() {
+  return await query(`
+    SELECT a.id, a.masa_id, m.ad AS masa_ad, a.acilis_tarih,
+           TIMESTAMPDIFF(HOUR, a.acilis_tarih, NOW()) AS saat
+      FROM adisyonlar a
+      LEFT JOIN masalar m ON m.id = a.masa_id
+     WHERE a.durum = 'acik'
+       AND TIMESTAMPDIFF(HOUR, a.acilis_tarih, NOW()) >= 3
+     ORDER BY a.acilis_tarih ASC
+  `);
+}
 // ==================== KRİTİK STOK ====================
 export async function kritikStokBildirim() {
   const rows = await query(
-    `SELECT id, urun_adi, stok, kritik_seviye
+    `SELECT id, urun_adi, stok, kritik_seviye,tip
        FROM urunler
       WHERE durum = 1
-        AND tip = 'hammadde'
-        AND stok <= kritik_seviye
+      AND kritik_seviye IS NOT NULL
+      AND stok <= kritik_seviye
       ORDER BY stok ASC
       LIMIT 10`
   );
   return rows;
 }
 
+
+
+
 // ==================== ÖDENMEMİŞ FATURALAR ====================
 async function odenmemisFaturalar() {
   const satisRows = await query(`
     SELECT f.id, f.tarih, c.unvan AS cari, f.durum,
-           COALESCE(SUM(d.adet * d.birim_fiyat), 0) AS toplam,
+           GREATEST(0,
+             (SELECT COALESCE(SUM(d.adet * d.birim_fiyat), 0)
+                FROM satis_fatura_detaylari d WHERE d.fatura_id = f.id)
+             - COALESCE(f.odenen_tutar, 0)
+             - (SELECT COALESCE(SUM(iad.adet * iad.birim_fiyat), 0)
+                  FROM satis_fatura_detaylari iad
+                  JOIN satis_faturalar iadf ON iadf.id = iad.fatura_id
+                 WHERE iadf.kaynak_fatura_id = f.id
+                   AND iadf.fatura_tipi = 'iade'
+                   AND iadf.arsivlendi = 0)
+           ) AS toplam,
            f.odenen_tutar
       FROM satis_faturalar f
       JOIN cariler c ON c.id = f.cari_id
-      LEFT JOIN satis_fatura_detaylari d ON d.fatura_id = f.id
      WHERE f.fatura_tipi = 'normal'
        AND f.durum IN ('odenmedi', 'kismi')
-       AND f.arsivlendi = 0 
-     GROUP BY f.id, f.tarih, c.unvan, f.durum, f.odenen_tutar
+       AND f.arsivlendi = 0
+       -- Tamamen iade edilmişleri hariç tut
+       AND (
+         SELECT COALESCE(SUM(iad.adet), 0)
+           FROM satis_fatura_detaylari iad
+           JOIN satis_faturalar iadf ON iadf.id = iad.fatura_id
+          WHERE iadf.kaynak_fatura_id = f.id
+            AND iadf.fatura_tipi = 'iade'
+            AND iadf.arsivlendi = 0
+       ) < (
+         SELECT COALESCE(SUM(d2.adet), 0)
+           FROM satis_fatura_detaylari d2
+          WHERE d2.fatura_id = f.id
+       ) - 0.01
      ORDER BY f.tarih ASC
   `);
 
   const alisRows = await query(`
     SELECT f.id, f.tarih, c.unvan AS cari, f.durum,
-           COALESCE(SUM(d.miktar * d.birim_fiyat), 0) AS toplam,
+           GREATEST(0,
+             (SELECT COALESCE(SUM(d.miktar * d.birim_fiyat), 0)
+                FROM alis_fatura_detaylari d WHERE d.fatura_id = f.id)
+             - COALESCE(f.odenen_tutar, 0)
+             - (SELECT COALESCE(SUM(iad.miktar * iad.birim_fiyat), 0)
+                  FROM alis_fatura_detaylari iad
+                  JOIN alis_faturalar iadf ON iadf.id = iad.fatura_id
+                 WHERE iadf.kaynak_fatura_id = f.id
+                   AND iadf.fatura_tipi = 'iade'
+                   AND COALESCE(iadf.arsivlendi, 0) = 0)
+           ) AS toplam,
            f.odenen_tutar
       FROM alis_faturalar f
       JOIN cariler c ON c.id = f.cari_id
-      LEFT JOIN alis_fatura_detaylari d ON d.fatura_id = f.id
      WHERE f.fatura_tipi = 'normal'
        AND f.durum IN ('odenmedi', 'kismi')
-       AND f.arsivlendi = 0 
-     GROUP BY f.id, f.tarih, c.unvan, f.durum, f.odenen_tutar
+       AND COALESCE(f.arsivlendi, 0) = 0
+       AND (
+         SELECT COALESCE(SUM(iad.miktar), 0)
+           FROM alis_fatura_detaylari iad
+           JOIN alis_faturalar iadf ON iadf.id = iad.fatura_id
+          WHERE iadf.kaynak_fatura_id = f.id
+            AND iadf.fatura_tipi = 'iade'
+            AND COALESCE(iadf.arsivlendi, 0) = 0
+       ) < (
+         SELECT COALESCE(SUM(d2.miktar), 0)
+           FROM alis_fatura_detaylari d2
+          WHERE d2.fatura_id = f.id
+       ) - 0.01
      ORDER BY f.tarih ASC
   `);
 
-  return {
-    satis: satisRows,
-    alis: alisRows,
-  };
-}
-
-// ==================== UZUN SÜRE AÇIK ADİSYONLAR ====================
-export async function uzunAdisyonlar() {
-  return await query(
-    `SELECT a.id, a.acilis_tarih, a.toplam,
-            m.ad AS masa_ad,
-            TIMESTAMPDIFF(MINUTE, a.acilis_tarih, NOW()) AS dakika
-       FROM adisyonlar a
-       JOIN masalar m ON m.id = a.masa_id
-      WHERE a.durum = 'acik'
-        AND TIMESTAMPDIFF(MINUTE, a.acilis_tarih, NOW()) >= 60
-      ORDER BY a.acilis_tarih ASC
-      LIMIT 10`
-  );
+  return { satis: satisRows, alis: alisRows };
 }
 
 // ==================== MUTFAKTA BEKLEYEN ====================
@@ -114,3 +151,4 @@ export async function tumBildirimler() {
     vadesiGecen,
   };
 }
+
