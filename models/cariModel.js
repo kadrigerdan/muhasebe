@@ -98,13 +98,14 @@ export async function cariEkstre(cariId) {
             CASE WHEN af.fatura_tipi = 'iade' THEN 'alis_iade_odeme' ELSE 'alis_odeme' END AS tip,
             fo.id AS fatura_id, fo.tarih,
             fo.tutar AS tutar,
-            CASE WHEN af.fatura_tipi = 'iade' THEN 0 ELSE fo.tutar END AS borc,
+            CASE WHEN af.fatura_tipi = 'iade' AND fo.kasadan_dus = 1 THEN fo.tutar ELSE 0 END AS borc,
             CASE WHEN af.fatura_tipi = 'iade' THEN fo.tutar ELSE 0 END AS alacak
           FROM fatura_odemeleri fo
           JOIN alis_faturalar af ON af.id = fo.fatura_id
          WHERE fo.fatura_tipi = 'alis'
-           AND af.cari_id = ?
-           AND af.arsivlendi = 0
+  AND af.cari_id = ?
+  AND af.arsivlendi = 0
+  AND (af.fatura_tipi = 'normal' OR fo.kasadan_dus = 1)
 
         UNION ALL
 
@@ -125,13 +126,14 @@ export async function cariEkstre(cariId) {
             CASE WHEN sf.fatura_tipi = 'iade' THEN 'satis_iade_odeme' ELSE 'satis_tahsilat' END AS tip,
             fo.id AS fatura_id, fo.tarih,
             fo.tutar AS tutar,
-            CASE WHEN sf.fatura_tipi = 'iade' THEN fo.tutar ELSE 0 END AS borc,
+            CASE WHEN sf.fatura_tipi = 'iade' AND fo.kasadan_dus = 1 THEN fo.tutar ELSE 0 END AS borc,
             CASE WHEN sf.fatura_tipi = 'iade' THEN 0 ELSE fo.tutar END AS alacak
-          FROM fatura_odemeleri fo
-          JOIN satis_faturalar sf ON sf.id = fo.fatura_id
-         WHERE fo.fatura_tipi = 'satis'
-           AND sf.cari_id = ?
-           AND sf.arsivlendi = 0
+        FROM fatura_odemeleri fo
+        JOIN satis_faturalar sf ON sf.id = fo.fatura_id
+        WHERE fo.fatura_tipi = 'satis'
+        AND sf.cari_id = ?
+        AND sf.arsivlendi = 0
+        AND (sf.fatura_tipi = 'normal' OR fo.kasadan_dus = 1)
 
         ORDER BY tarih, tip, fatura_id`,
         [cariId, cariId, cariId, cariId]

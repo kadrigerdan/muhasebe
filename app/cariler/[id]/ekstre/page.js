@@ -73,7 +73,7 @@ export default async function CariEkstrePage({ params }) {
   return (
     <div className="p-6 max-w-5xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Cari Ekstresi — {cari.unvan}</h1>
+        <h1 className="text-2xl font-bold">Cari Ekstresi — {cari.unvan}<span className="text-gray-400 text-sm">#{cari.id}</span></h1>
         <Link href="/cariler" className="text-blue-600 hover:underline">
           ← Cariler
         </Link>
@@ -102,10 +102,10 @@ export default async function CariEkstrePage({ params }) {
         <div className="border rounded p-3 bg-white">
           <div className="text-xs text-gray-500">Net Bakiye</div>
           <div className={`text-xl font-bold ${Number(bakiye) > 0
-              ? 'text-red-700'
-              : Number(bakiye) < 0
-                ? 'text-green-700'
-                : 'text-gray-500'
+            ? 'text-red-700'
+            : Number(bakiye) < 0
+              ? 'text-green-700'
+              : 'text-gray-500'
             }`}>
             {Number(bakiye) === 0 ? '—' : paraFormat(bakiye) + ' ₺'}
           </div>
@@ -161,10 +161,10 @@ export default async function CariEkstrePage({ params }) {
                 {Number(h.alacak) > 0 ? paraFormat(h.alacak) + ' ₺' : '—'}
               </td>
               <td className={`border p-2 text-right font-medium ${Number(h.bakiye) > 0
-                  ? 'text-red-700'
-                  : Number(h.bakiye) < 0
-                    ? 'text-green-700'
-                    : 'text-gray-500'
+                ? 'text-red-700'
+                : Number(h.bakiye) < 0
+                  ? 'text-green-700'
+                  : 'text-gray-500'
                 }`}>
                 {Number(h.bakiye) === 0 ? '—' : paraFormat(h.bakiye) + ' ₺'}
               </td>

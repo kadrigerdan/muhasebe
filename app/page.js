@@ -11,14 +11,14 @@ export const dynamic = 'force-dynamic';
 export default async function AnaSayfa() {
 
   const [
-    cariArr, urunArr, personelArr, stokArr, kritikArr,
-    alisArr, satisArr, kasaTip, kasaGenel, restoranOzet, bildirimData,
+    cariArr, urunArr, personelArr, stokArr, alisArr,
+    satisArr, kasaTip, kasaGenel, restoranOzet, bildirimData,
   ] = await Promise.all([
     query('SELECT COUNT(*) AS toplam FROM cariler WHERE aktif = 1'),
     query('SELECT COUNT(*) AS toplam FROM urunler WHERE durum = 1'),
     query('SELECT COUNT(*) AS toplam FROM personel WHERE aktif = 1'),
     query('SELECT COALESCE(SUM(stok * varsayilan_alis_fiyati), 0) AS deger FROM urunler WHERE durum = 1'),
-    query('SELECT COUNT(*) AS toplam FROM urunler WHERE durum = 1 AND kritik_seviye IS NOT NULL AND stok <= kritik_seviye'),
+
     query('SELECT COALESCE(SUM(d.miktar * d.birim_fiyat), 0) AS toplam FROM alis_faturalar f JOIN alis_fatura_detaylari d ON d.fatura_id = f.id'),
     query('SELECT COALESCE(SUM(d.adet * d.birim_fiyat), 0) AS toplam FROM satis_faturalar f JOIN satis_fatura_detaylari d ON d.fatura_id = f.id'),
     kasaTipOzet(),
@@ -34,7 +34,6 @@ export default async function AnaSayfa() {
   const urunSayi = urunArr[0] ?? { toplam: 0 };
   const personelSayi = personelArr[0] ?? { toplam: 0 };
   const stokDeger = stokArr[0] ?? { deger: 0 };
-  const kritikSayi = kritikArr[0] ?? { toplam: 0 };
   const alisToplam = Number(alisArr[0]?.toplam ?? 0);
   const satisToplam = Number(satisArr[0]?.toplam ?? 0);
   const kar = satisToplam - alisToplam;
@@ -43,7 +42,7 @@ export default async function AnaSayfa() {
 
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-2">
-      <h1 className="text-3xl font-bold">Muhasebe Paneli </h1>
+      <h1 className="text-3xl font-bold ml-10">Muhasebe Paneli </h1>
       <div className='grid grid-cols-2 md:grid-cols-1'>
         <div>
           {/* KRİTİK STOK ŞERİDİ */}
@@ -123,7 +122,7 @@ export default async function AnaSayfa() {
 
 
       {/* ANA KARTLAR */}
-      <div className="grid grid-cols-2 md:grid-cols-6 gap-4 text-gray-900">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-gray-900">
 
         <Link href="/alis-faturalar" className="border rounded-lg p-4 bg-white hover:shadow-md transition">
           <div className="text-xs mb-1">Toplam Alış</div>
@@ -153,22 +152,12 @@ export default async function AnaSayfa() {
           <div className="text-xs text-gray-900 mb-1">Aktif Ürün</div>
           <div className="text-2xl font-bold">{sayiFormat(urunSayi.toplam)}</div>
         </Link>
-        <Link href="/personel" className="border rounded-lg p-4 bg-white hover:shadow-md transition">
-          <div className="text-xs text-gray-900 mb-1">Aktif Personel</div>
-          <div className="text-2xl font-bold">{sayiFormat(personelSayi.toplam)}</div>
-        </Link>
+
       </div>
 
       {/* RESTORAN DURUMU */}
       <div>
-        <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
-          <Link href="/stok" className="border rounded-lg p-4 bg-yellow-50 hover:shadow-md transition">
-            <div className="text-xs text-yellow-950 mb-1">Kritik Stok</div>
-            <div className="text-2xl font-bold text-yellow-900">
-              {sayiFormat(kritikSayi.toplam)}
-            </div>
-          </Link>
-
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
           <Link href="/restoran" className="border rounded-lg p-4 bg-white hover:shadow-md transition">
             <div className="text-xs text-gray-900 mb-1">Açık Adisyon</div>
             <div className="text-2xl font-bold text-red-700">
@@ -192,6 +181,10 @@ export default async function AnaSayfa() {
             <div className="text-2xl font-bold">
               {paraFormat(restoran.bugun_ciro)} ₺
             </div>
+          </Link>
+          <Link href="/personel" className="border rounded-lg p-4 bg-white hover:shadow-md transition">
+            <div className="text-xs text-gray-900 mb-1">Aktif Personel</div>
+            <div className="text-2xl font-bold">{sayiFormat(personelSayi.toplam)}</div>
           </Link>
         </div>
       </div>

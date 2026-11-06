@@ -157,17 +157,7 @@ export default function Bildirimler({ bildirimler }) {
               </div>
               <span className="text-xs text-blue-700">Satış →</span>
             </div>
-            <ul className="text-xs text-blue-700 space-y-0.5">
-              {odenmemisSatis.slice(0, 3).map((f) => {
-                const kalan = Number(f.toplam) - Number(f.odenen_tutar || 0);
-                return (
-                  <li key={String(f.id)} className="flex justify-between">
-                    <span>{f.cari}</span>
-                    <span className="font-mono">{paraFormat(kalan)} ₺</span>
-                  </li>
-                );
-              })}
-            </ul>
+
           </Link>
         )}
 
@@ -184,7 +174,7 @@ export default function Bildirimler({ bildirimler }) {
               <span className="text-xs text-gray-700">Alış →</span>
             </div>
             <ul className="text-xs text-gray-700 space-y-0.5">
-              {odenmemisAlis.slice(0, 3).map((f) => {
+              {odenmemisAlis.slice(0, 5).map((f) => {
                 const kalan = Number(f.toplam) - Number(f.odenen_tutar || 0);
                 return (
                   <li key={String(f.id)} className="flex justify-between">

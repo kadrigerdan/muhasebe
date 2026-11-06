@@ -74,9 +74,9 @@ export default function SatisFaturaKalemEditor({ urunler, onChange }) {
 
             // Stok yeterliliği kontrolü (uyarı)
             const u = urunler.find((x) => String(x.id) === String(k.urun_id));
+            console.log('DEBUG urun:', k.urun_id, '| kritik_seviye:', u?.kritik_seviye, '| typeof:', typeof u?.kritik_seviye);
             const stokYetersiz =
-              u && Number(k.adet) > Number(u.stok);
-
+              u && u.kritik_seviye != null && Number(k.adet) > Number(u.stok)
             return (
               <tr key={i} className={stokYetersiz ? 'bg-red-50' : ''}>
                 <td className="border p-1">
@@ -86,14 +86,17 @@ export default function SatisFaturaKalemEditor({ urunler, onChange }) {
                     className="w-full border rounded px-2 py-1"
                   >
                     <option value="">-- Seç --</option>
-                    {urunler.map((u) => (
-                      <option key={u.id} value={u.id}>
-                        {u.urun_adi} — Alış: {paraFormat(u.varsayilan_alis_fiyati)} ₺ | Satış: {paraFormat(u.varsayilan_satis_fiyati)} ₺ (stok: {u.stok})
-                      </option>
-                    ))}
+                    {urunler.map((u) => {
+                      console.log('DEBUG ÜRÜN:', u.urun_adi, '| stok:', u.stok, '| kritik_seviye:', u.kritik_seviye);
+                      return (
+                        <option key={u.id} value={u.id}>
+                          {u.urun_adi} — Alış: {paraFormat(u.varsayilan_alis_fiyati)} ₺ | Satış: {paraFormat(u.varsayilan_satis_fiyati)} ₺ {u.kritik_seviye !== null && ` (stok: ${u.stok})`}
+                        </option>
+                      );
+                    })}
                   </select>
-                  {stokYetersiz && (
-                    <div className="text-xs text-red-600 mt-1">
+                  {u && u.kritik_seviye != null && Number(k.adet) > Number(u.stok) && (
+                    <div className="text-xs text-red-600">
                       ⚠ Yetersiz stok (mevcut: {u.stok})
                     </div>
                   )}

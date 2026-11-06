@@ -207,18 +207,28 @@ export async function alisIadeFaturaOlustur({ kaynak_fatura_id, tarih, kalemler 
             );
 
             // 3d. Stok hareketi
-            await conn.query(
-                `INSERT INTO stok_hareketleri
-                   (urun_id, tip, miktar, aciklama, kaynak, kaynak_id, tarih)
-                 VALUES (?, 'alis_iade', ?, ?, 'alis_fatura', ?, ?)`,
-                [k.urun_id, k.miktar, `Alış iadesi #${yeniFaturaId}`, yeniFaturaId, tarih]
+            // Ürünün kritik_seviye'sini çek (stok takibi var mı?)
+            const urunBilgiRows = await conn.query(
+                'SELECT kritik_seviye FROM urunler WHERE id = ?',
+                [k.urun_id]
             );
+            const stokTakipli = urunBilgiRows[0]?.kritik_seviye != null;
 
-            // 3e. Stok azalt
-            await conn.query(
-                'UPDATE urunler SET stok = stok - ? WHERE id = ?',
-                [k.miktar, k.urun_id]
-            );
+            if (stokTakipli) {
+                // Stok hareketi — iade = giriş (stok ARTAR)
+                await conn.query(
+                    `INSERT INTO stok_hareketleri
+           (urun_id, tip, miktar, aciklama, kaynak, kaynak_id, tarih)
+         VALUES (?, 'iade', ?, ?, 'satis_fatura', ?, ?)`,
+                    [k.urun_id, k.adet, `Satış iadesi #${yeniFaturaId}`, yeniFaturaId, tarih]
+                );
+
+                // Stok artır
+                await conn.query(
+                    'UPDATE urunler SET stok = stok + ? WHERE id = ?',
+                    [k.adet, k.urun_id]
+                );
+            }
         }
 
         // alisIadeFaturaOlustur içinde, for döngüsünden sonra, commit'ten önce:
@@ -496,12 +506,28 @@ export async function alisFaturaOlustur({ cari_id, tarih, kalemler }) {
             );
 
             // 3. Stok artır + varsayılan alış fiyatı güncelle
-            await conn.query(
-                `UPDATE urunler
-                    SET stok = stok + ?, varsayilan_alis_fiyati = ?
-                  WHERE id = ?`,
-                [k.miktar, k.birim_fiyat, k.urun_id]
+            // Ürünün kritik_seviye'sini çek
+            const urunBilgiRows = await conn.query(
+                'SELECT kritik_seviye FROM urunler WHERE id = ?',
+                [k.urun_id]
             );
+            const stokTakipli = urunBilgiRows[0]?.kritik_seviye != null;
+
+            if (stokTakipli) {
+                // Stok artır + fiyat güncelle
+                await conn.query(
+                    `UPDATE urunler
+            SET stok = stok + ?, varsayilan_alis_fiyati = ?
+          WHERE id = ?`,
+                    [k.miktar, k.birim_fiyat, k.urun_id]
+                );
+            } else {
+                // Stok takibi yok → sadece fiyat
+                await conn.query(
+                    'UPDATE urunler SET varsayilan_alis_fiyati = ? WHERE id = ?',
+                    [k.birim_fiyat, k.urun_id]
+                );
+            }
         }
 
         await conn.commit();

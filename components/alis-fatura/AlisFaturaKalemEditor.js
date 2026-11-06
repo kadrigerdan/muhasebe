@@ -71,6 +71,7 @@ export default function AlisFaturaKalemEditor({ urunler, onChange }) {
           )}
           {kalemler.map((k, i) => {
             const satir = Number(k.miktar || 0) * Number(k.birim_fiyat || 0);
+
             return (
               <tr key={i}>
                 <td className="border p-1">
@@ -82,7 +83,8 @@ export default function AlisFaturaKalemEditor({ urunler, onChange }) {
                     <option value="">— Ürün seçin —</option>          {/* ← EKLE */}
                     {urunler.map((u) => (
                       <option key={u.id} value={u.id}>
-                        {u.urun_adi} — Alış: {paraFormat(u.varsayilan_alis_fiyati)} ₺ | Satış: {paraFormat(u.varsayilan_satis_fiyati)} ₺ (stok: {u.stok})
+                        {u.urun_adi} — Alış: {paraFormat(u.varsayilan_alis_fiyati)} ₺ | Satış: {paraFormat(u.varsayilan_satis_fiyati)} ₺
+                        {u.kritik_seviye !== null && ` (stok: ${u.stok})`}
                       </option>
                     ))}
                   </select>

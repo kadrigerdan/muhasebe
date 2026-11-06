@@ -106,48 +106,68 @@ export async function satisFaturaOlustur({ cari_id, tarih, kalemler }) {
     try {
         await conn.beginTransaction();
 
-        // Stok kontrolü (kilitli oku)
+        // 1. Stok kontrolü (sadece stok takipli ürünler)
         for (const k of kalemler) {
             const urunRows = await conn.query(
-                'SELECT id, urun_adi, stok FROM urunler WHERE id = ? FOR UPDATE',
+                'SELECT id, urun_adi, stok, kritik_seviye FROM urunler WHERE id = ? FOR UPDATE',
                 [k.urun_id]
             );
             const urun = urunRows[0];
             if (!urun) throw new Error(`Ürün bulunamadı: ${k.urun_id}`);
-            if (Number(urun.stok) < Number(k.adet)) {
+            // Stok takibi yoksa (kritik_seviye NULL) yetersizlik kontrolü yapma
+            if (urun.kritik_seviye != null && Number(urun.stok) < Number(k.adet)) {
                 throw new Error(
                     `Yetersiz stok: ${urun.urun_adi} (mevcut: ${urun.stok}, istenen: ${k.adet})`
                 );
             }
         }
 
+        // 2. Fatura başlığı
         const basRes = await conn.query(
-            'INSERT INTO satis_faturalar (cari_id, tarih) VALUES (?, ?)',
+            `INSERT INTO satis_faturalar (cari_id, tarih, durum, odenen_tutar)
+     VALUES (?, ?, 'odenmedi', 0)`,
             [cari_id, tarih]
         );
         const faturaId = Number(basRes.insertId);
 
+        // 3. Kalemler
         for (const k of kalemler) {
+            // 3a. Detay INSERT (her zaman)
             await conn.query(
                 `INSERT INTO satis_fatura_detaylari
-           (fatura_id, urun_id, adet, birim_fiyat)
-         VALUES (?, ?, ?, ?)`,
+                   (fatura_id, urun_id, adet, birim_fiyat)
+                 VALUES (?, ?, ?, ?)`,
                 [faturaId, k.urun_id, k.adet, k.birim_fiyat]
             );
 
-            await conn.query(
-                `INSERT INTO stok_hareketleri
-           (urun_id, tip, miktar, aciklama, kaynak, kaynak_id, tarih)
-         VALUES (?, 'cikis', ?, ?, 'satis_fatura', ?, ?)`,
-                [k.urun_id, k.adet, `Satış faturası #${faturaId}`, faturaId, tarih]
+            // 3b. Ürünün kritik_seviye'sini çek
+            const urunBilgiRows = await conn.query(
+                'SELECT kritik_seviye FROM urunler WHERE id = ?',
+                [k.urun_id]
             );
+            const stokTakipli = urunBilgiRows[0]?.kritik_seviye != null;
 
-            await conn.query(
-                `UPDATE urunler
-            SET stok = stok - ?, varsayilan_satis_fiyati = ?
-          WHERE id = ?`,
-                [k.adet, k.birim_fiyat, k.urun_id]
-            );
+            // 3c. Stok takipli ise hareket + stok düş
+            if (stokTakipli) {
+                await conn.query(
+                    `INSERT INTO stok_hareketleri
+                       (urun_id, tip, miktar, aciklama, kaynak, kaynak_id, tarih)
+                     VALUES (?, 'cikis', ?, ?, 'satis_fatura', ?, ?)`,
+                    [k.urun_id, k.adet, `Satış faturası #${faturaId}`, faturaId, tarih]
+                );
+                await conn.query(
+                    `UPDATE urunler
+                        SET stok = stok - ?, varsayilan_satis_fiyati = ?
+                      WHERE id = ?`,
+                    [k.adet, k.birim_fiyat, k.urun_id]
+                );
+            } else {
+                // Stok takibi yok → sadece fiyat güncelle
+                await conn.query(
+                    'UPDATE urunler SET varsayilan_satis_fiyati = ? WHERE id = ?',
+                    [k.birim_fiyat, k.urun_id]
+                );
+            }
         }
 
         await conn.commit();
@@ -349,18 +369,28 @@ export async function satisIadeFaturaOlustur({ kaynak_fatura_id, tarih, kalemler
             );
 
             // Stok hareketi — iade = giriş (stok ARTAR)
-            await conn.query(
-                `INSERT INTO stok_hareketleri
-                   (urun_id, tip, miktar, aciklama, kaynak, kaynak_id, tarih)
-                 VALUES (?, 'iade', ?, ?, 'satis_fatura', ?, ?)`,
-                [k.urun_id, k.adet, `Satış iadesi #${yeniFaturaId}`, yeniFaturaId, tarih]
+            // Ürünün kritik_seviye'sini çek (stok takibi var mı?)
+            const urunBilgiRows = await conn.query(
+                'SELECT kritik_seviye FROM urunler WHERE id = ?',
+                [k.urun_id]
             );
+            const stokTakipli = urunBilgiRows[0]?.kritik_seviye != null;
 
-            // Stok artır (varsayilan_satis_fiyati'na dokunma!)
-            await conn.query(
-                'UPDATE urunler SET stok = stok + ? WHERE id = ?',
-                [k.adet, k.urun_id]
-            );
+            if (stokTakipli) {
+                // Stok hareketi — iade = giriş (stok ARTAR)
+                await conn.query(
+                    `INSERT INTO stok_hareketleri
+           (urun_id, tip, miktar, aciklama, kaynak, kaynak_id, tarih)
+         VALUES (?, 'iade', ?, ?, 'satis_fatura', ?, ?)`,
+                    [k.urun_id, k.adet, `Satış iadesi #${yeniFaturaId}`, yeniFaturaId, tarih]
+                );
+
+                // Stok artır
+                await conn.query(
+                    'UPDATE urunler SET stok = stok + ? WHERE id = ?',
+                    [k.adet, k.urun_id]
+                );
+            }
         }
 
         // Otomatik kapanış kontrolü — net borç 0 ise

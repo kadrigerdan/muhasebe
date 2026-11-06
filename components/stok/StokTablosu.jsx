@@ -100,7 +100,7 @@ export function StokTablosu() {
                     {u.kritik_seviye ?? '—'}
                   </td>
                   <td className="px-3 py-2 border text-center font-semibold">
-                    {u.stok}
+                    {u.kritik_seviye === null ? '—' : u.stok}
                     {kritik && (
                       <span className="ml-2 text-xs text-red-600">kritik</span>
                     )}

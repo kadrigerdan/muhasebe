@@ -32,7 +32,7 @@ export default function UrunList({ urunler }) {
           const marj = alis > 0 ? ((satis - alis) / alis) * 100 : 0;
           const stokTakip = u.tip === 'hammadde';
           const kritikMi = stokTakip && Number(u.stok) <= Number(u.kritik_seviye);
-          const tukendi = stokTakip && Number(u.stok) <= 0;
+          const tukendi = stokTakip && u.kritik_seviye !== null && Number(u.stok) <= 0;
 
           return (
             <tr
@@ -71,7 +71,7 @@ export default function UrunList({ urunler }) {
               </td>
 
               {/* 6. STOK */}
-              <td className="border p-2 text-right font-medium">{String(u.stok)}</td>
+              <td className="border p-2 text-right font-medium">{u.kritik_seviye === null ? '—' : String(u.stok)}</td>
 
               {/* 7. KRİTİK */}
               <td className="border p-2 text-right text-gray-500">

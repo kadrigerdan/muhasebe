@@ -96,7 +96,7 @@ async function odenmemisFaturalar() {
            FROM alis_fatura_detaylari d2
           WHERE d2.fatura_id = f.id
        ) - 0.01
-     ORDER BY f.tarih ASC
+     ORDER BY f.tarih DESC
   `);
 
   return { satis: satisRows, alis: alisRows };

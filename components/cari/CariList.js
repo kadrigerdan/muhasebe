@@ -6,6 +6,7 @@ export default function CariList({ cariler }) {
     <table className="w-full border-collapse border text-sm">
       <thead className="bg-gray-100">
         <tr>
+          <th className="border p-2 text-center">ID</th>
           <th className="border p-2 text-left">Ünvan</th>
           <th className="border p-2 text-center">Tip</th>
           <th className="border p-2 text-left">Telefon</th>
@@ -34,6 +35,7 @@ export default function CariList({ cariler }) {
           const bakiye = Number(c.bakiye);
           return (
             <tr key={String(c.id)}>
+              <td className="border p-2 text-center text-gray-500">{c.id}</td>
               <td className="border p-2">{c.unvan}</td>
               <td className="border p-2 text-center">
                 {c.tip === 'tedarikci' && (
