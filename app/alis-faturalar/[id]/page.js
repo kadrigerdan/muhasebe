@@ -252,7 +252,7 @@ export default async function AlisFaturaDetayPage({ params }) {
         <thead className="bg-gray-100">
           <tr>
             <th className="border p-2 text-left">Ürün</th>
-            <th className="border p-2 text-right">Miktar</th>
+            <th className="border p-2 text-right">Miktar (Kg)</th>
             <th className="border p-2 text-right">Birim Fiyat</th>
             <th className="border p-2 text-right">Satır Toplam</th>
           </tr>

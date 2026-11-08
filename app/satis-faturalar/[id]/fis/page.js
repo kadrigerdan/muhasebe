@@ -77,7 +77,7 @@ export default async function SatisFaturaFisPage({ params }) {
     satirlar.push(kisalt(k.urun_adi));
     satirlar.push(
       noktali(
-        `  ${String(k.adet)} x ${Number(k.birim_fiyat).toFixed(2)}`,
+        `  ${String(k.adet)} Kg x ${Number(k.birim_fiyat).toFixed(2)}`,
         `${(Number(k.adet) * Number(k.birim_fiyat)).toFixed(2)}`
       )
     );

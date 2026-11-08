@@ -55,7 +55,7 @@ export default function SatisFaturaKalemEditor({ urunler, onChange }) {
         <thead className="bg-gray-100">
           <tr>
             <th className="border p-2 text-left">Ürün</th>
-            <th className="border p-2 w-24">Adet</th>
+            <th className="border p-2 w-24">Miktar (Kg)</th>
             <th className="border p-2 w-28">Birim Fiyat</th>
             <th className="border p-2 w-28 text-right">Satır Toplam</th>
             <th className="border p-2 w-12"></th>
@@ -142,7 +142,7 @@ export default function SatisFaturaKalemEditor({ urunler, onChange }) {
           Toplam Adet: <b>{toplamAdet}</b>
         </div>
         <div>
-          Toplam Tutar: <b>{paraFormat(toplam)} ₺</b>
+          Toplam Miktar (Kg): <b>{paraFormat(toplam)} ₺</b>
         </div>
       </div>
     </div>

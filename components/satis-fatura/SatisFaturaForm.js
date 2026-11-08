@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { satisFaturaEkleAction } from '@/actions/satisFaturaActions';
 import SatisFaturaKalemEditor from './SatisFaturaKalemEditor';
 
-export default function SatisFaturaForm({ cariler, urunler, onSuccess }) {
+export default function SatisFaturaForm({ cariler, urunler, depolar, onSuccess }) {
   const router = useRouter();
   const [kalemler, setKalemler] = useState([]);
   const [state, formAction, pending] = useActionState(satisFaturaEkleAction, null);
@@ -52,6 +52,21 @@ export default function SatisFaturaForm({ cariler, urunler, onSuccess }) {
             className="w-full border rounded px-3 py-2"
           />
         </div>
+
+        <div>
+          <label className="block font-medium mb-1">Depo *</label>
+          <select
+            name="depolar_id"
+            required
+            defaultValue=""  // Kasap Deposu varsayılan
+            className="w-full border rounded px-3 py-2"
+          >
+            {depolar.map((d) => (
+              <option key={d.id} value={d.id}>{d.ad}</option>
+            ))}
+          </select>
+        </div>
+
       </div>
 
       <SatisFaturaKalemEditor urunler={urunler} onChange={setKalemler} />

@@ -55,7 +55,7 @@ export default function AlisFaturaKalemEditor({ urunler, onChange }) {
         <thead className="bg-gray-100">
           <tr>
             <th className="border p-2 text-left">Ürün</th>
-            <th className="border p-2 w-24">Miktar</th>
+            <th className="border p-2 w-24">Miktar (Kg)</th>
             <th className="border p-2 w-28">Birim Fiyat</th>
             <th className="border p-2 w-28 text-right">Satır</th>
             <th className="border p-2 w-12"></th>

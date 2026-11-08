@@ -453,35 +453,19 @@ export async function alisFaturaIadeEdilebilir(faturaId) {
     );
 }
 
-export async function alisFaturaOlustur({ cari_id, tarih, kalemler }) {
+export async function alisFaturaOlustur({ cari_id, tarih, depo_id, kalemler }) {
     const conn = await getConnection();
     try {
         await conn.beginTransaction();
 
-        // Ürün kontrolü + kilit
-        for (const k of kalemler) {
-            const urunRows = await conn.query(
-                'SELECT id, urun_adi FROM urunler WHERE id = ? FOR UPDATE',
-                [k.urun_id]
-            );
-            const urun = urunRows[0];
-            if (!urun) {
-                throw new Error(`Ürün bulunamadı: ${k.urun_id}`);
-            }
-        }
-
-        // Fatura başlığı
+        // Fatura başlığı (depo_id ile)
         const basRes = await conn.query(
-            "INSERT INTO alis_faturalar (cari_id, tarih, durum, odenen_tutar) VALUES (?, ?, 'odenmedi', 0)",
-            [cari_id, tarih]
+            `INSERT INTO alis_faturalar (cari_id, tarih, depo_id, durum, odenen_tutar) 
+             VALUES (?, ?, ?, 'odenmedi', 0)`,
+            [cari_id, tarih, depo_id]
         );
         const faturaId = Number(basRes.insertId);
 
-        if (!Number.isFinite(faturaId) || faturaId <= 0) {
-            throw new Error('Fatura başlığı oluşturulamadı (insertId alınamadı).');
-        }
-
-        // Kalemler — GERÇEK KOD
         for (const k of kalemler) {
             // 1. Fatura detayı
             await conn.query(
@@ -491,43 +475,27 @@ export async function alisFaturaOlustur({ cari_id, tarih, kalemler }) {
                 [faturaId, k.urun_id, k.miktar, k.birim_fiyat]
             );
 
-            // 2. Stok hareketi (giriş)
+            // 2. Stok hareketi (depo_id ile)
             await conn.query(
                 `INSERT INTO stok_hareketleri
-                   (urun_id, tip, miktar, aciklama, kaynak, kaynak_id, tarih)
-                 VALUES (?, 'giris', ?, ?, 'alis_fatura', ?, ?)`,
-                [
-                    k.urun_id,
-                    k.miktar,
-                    `Alış faturası #${faturaId}`,
-                    faturaId,
-                    tarih,
-                ]
+                   (urun_id, depo_id, tip, miktar, aciklama, kaynak, kaynak_id, tarih)
+                 VALUES (?, ?, 'giris', ?, ?, 'alis_fatura', ?, ?)`,
+                [k.urun_id, depo_id, k.miktar, `Alış faturası #${faturaId}`, faturaId, tarih]
             );
 
-            // 3. Stok artır + varsayılan alış fiyatı güncelle
-            // Ürünün kritik_seviye'sini çek
-            const urunBilgiRows = await conn.query(
-                'SELECT kritik_seviye FROM urunler WHERE id = ?',
-                [k.urun_id]
+            // 3. Seçilen depoya stok ekle
+            await conn.query(
+                `INSERT INTO urun_stok (urun_id, depo_id, stok) 
+                 VALUES (?, ?, ?)
+                 ON DUPLICATE KEY UPDATE stok = stok + VALUES(stok)`,
+                [k.urun_id, depo_id, k.miktar]
             );
-            const stokTakipli = urunBilgiRows[0]?.kritik_seviye != null;
 
-            if (stokTakipli) {
-                // Stok artır + fiyat güncelle
-                await conn.query(
-                    `UPDATE urunler
-            SET stok = stok + ?, varsayilan_alis_fiyati = ?
-          WHERE id = ?`,
-                    [k.miktar, k.birim_fiyat, k.urun_id]
-                );
-            } else {
-                // Stok takibi yok → sadece fiyat
-                await conn.query(
-                    'UPDATE urunler SET varsayilan_alis_fiyati = ? WHERE id = ?',
-                    [k.birim_fiyat, k.urun_id]
-                );
-            }
+            // 4. Varsayılan alış fiyatını güncelle
+            await conn.query(
+                'UPDATE urunler SET varsayilan_alis_fiyati = ? WHERE id = ?',
+                [k.birim_fiyat, k.urun_id]
+            );
         }
 
         await conn.commit();

@@ -126,7 +126,7 @@ export default async function RestoranRaporPage({ searchParams }) {
               <tr>
                 <th className="border p-2 text-left w-12">#</th>
                 <th className="border p-2 text-left">Ürün</th>
-                <th className="border p-2 text-right">Adet</th>
+                <th className="border p-2 text-right">Miktar (Kg)</th>
                 <th className="border p-2 text-right">Tutar</th>
               </tr>
             </thead>

@@ -103,7 +103,7 @@ export default async function SatisFaturaListPage({ searchParams }) {
           <div className="text-xl font-bold">{String(ozet?.fatura_sayisi ?? 0)}</div>
         </div>
         <div className="border rounded p-3 bg-white">
-          <div className="text-xs text-gray-500">Toplam Adet</div>
+          <div className="text-xs text-gray-500">Toplam Miktar (Kg)</div>
           <div className="text-xl font-bold">{String(ozet?.toplam_adet ?? 0)}</div>
         </div>
       </div>

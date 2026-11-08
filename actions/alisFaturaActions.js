@@ -4,8 +4,11 @@ import { alisFaturaOlustur, alisFaturaArsivle, alisFaturaGeriAl, alisIadeFaturaO
 
 export async function alisFaturaEkleAction(prevState, formData) {
     const cari_id = Number(formData.get('cari_id'));
+    const depo_id = Number(formData.get('depo_id'));
     const tarih = formData.get('tarih');
+
     if (!cari_id || cari_id <= 0) return { error: 'Tedarikçi seçilmelidir.' };
+    if (!depo_id) return { error: 'Depo seçilmelidir.' };
     if (!tarih) return { error: 'Tarih zorunludur.' };
 
     let kalemler;
@@ -44,6 +47,7 @@ export async function alisFaturaEkleAction(prevState, formData) {
         await alisFaturaOlustur({
             cari_id,
             tarih,
+            depo_id,
             kalemler: normalizedKalemler,                  // ← AYNI İSİM
         });
         revalidatePath('/alis-faturalar');

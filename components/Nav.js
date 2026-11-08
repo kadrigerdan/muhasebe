@@ -8,11 +8,12 @@ import { cikisAction } from '@/actions/authActions';
 const adminLinkler = [
   { href: '/', label: '🏠 Ana Sayfa' },
   { href: '/kasa', label: '💰 Kasa' },
-  { href: '/cariler', label: '📦 Cariler' },
+  { href: '/cariler', label: '👤 Cariler' },
   { href: '/alis-faturalar', label: '⬇️ Alış' },
   { href: '/satis-faturalar', label: '⬆️ Satış' },
   { href: '/urunler', label: '🔧 Ürünler' },
   { href: '/stok', label: '📦 Stok' },
+  { href: '/depolar', label: '📦 Depolar' },
   { href: '/import', label: '📤 Import' },
   { href: '/yedekleme', label: '💾 Yedekleme' },
   { href: '/ayarlar', label: '⚙️ Ayarlar' },

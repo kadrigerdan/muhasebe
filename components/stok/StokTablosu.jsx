@@ -71,6 +71,7 @@ export function StokTablosu() {
         <table className="w-full border text-sm">
           <thead className="bg-gray-100 dark:bg-gray-700">
             <tr>
+              <th className="border p-2 text-left">#</th>
               <th className="px-3 py-2 border text-left">Ürün</th>
               <th className="px-3 py-2 border text-right">Alış</th>
               <th className="px-3 py-2 border text-right">Satış</th>
@@ -89,6 +90,7 @@ export function StokTablosu() {
                   key={u.id}
                   className={kritik ? "bg-red-50 dark:bg-red-900/20" : ""}
                 >
+                  <td className="px-3 py-2 border">{String(u.id)}</td>
                   <td className="px-3 py-2 border">{u.urun_adi}</td>
                   <td className="px-3 py-2 border text-right">
                     {paraFormat(u.varsayilan_alis_fiyati)} ₺

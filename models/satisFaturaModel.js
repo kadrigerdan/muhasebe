@@ -101,38 +101,42 @@ export async function satisFaturaGetir(id) {
     return fatura;
 }
 
-export async function satisFaturaOlustur({ cari_id, tarih, kalemler }) {
+export async function satisFaturaOlustur({ cari_id, tarih, depo_id, kalemler }) {
     const conn = await getConnection();
     try {
         await conn.beginTransaction();
 
-        // 1. Stok kontrolü (sadece stok takipli ürünler)
+        // Stok kontrolü — seçilen depodan
         for (const k of kalemler) {
-            const urunRows = await conn.query(
-                'SELECT id, urun_adi, stok, kritik_seviye FROM urunler WHERE id = ? FOR UPDATE',
-                [k.urun_id]
+            const stokRows = await conn.query(
+                `SELECT us.stok, u.urun_adi, u.kritik_seviye
+                   FROM urun_stok us
+                   JOIN urunler u ON u.id = us.urun_id
+                  WHERE us.urun_id = ? AND us.depo_id = ?
+                  FOR UPDATE`,
+                [k.urun_id, depo_id]
             );
-            const urun = urunRows[0];
-            if (!urun) throw new Error(`Ürün bulunamadı: ${k.urun_id}`);
-            // Stok takibi yoksa (kritik_seviye NULL) yetersizlik kontrolü yapma
-            if (urun.kritik_seviye != null && Number(urun.stok) < Number(k.adet)) {
+            const stok = stokRows[0];
+            if (!stok) throw new Error(`Ürün bu depoda yok: ${k.urun_id}`);
+
+            // Sadece kritik_seviye varsa stok kontrolü
+            if (stok.kritik_seviye != null && Number(stok.stok) < Number(k.adet)) {
                 throw new Error(
-                    `Yetersiz stok: ${urun.urun_adi} (mevcut: ${urun.stok}, istenen: ${k.adet})`
+                    `Yetersiz stok: ${stok.urun_adi} (depo: ${depo_id}, mevcut: ${stok.stok}, istenen: ${k.adet})`
                 );
             }
         }
 
-        // 2. Fatura başlığı
+        // Fatura başlığı
         const basRes = await conn.query(
-            `INSERT INTO satis_faturalar (cari_id, tarih, durum, odenen_tutar)
-     VALUES (?, ?, 'odenmedi', 0)`,
-            [cari_id, tarih]
+            `INSERT INTO satis_faturalar (cari_id, tarih, depo_id, durum, odenen_tutar) 
+             VALUES (?, ?, ?, 'odenmedi', 0)`,
+            [cari_id, tarih, depo_id]
         );
         const faturaId = Number(basRes.insertId);
 
-        // 3. Kalemler
         for (const k of kalemler) {
-            // 3a. Detay INSERT (her zaman)
+            // 1. Fatura detayı
             await conn.query(
                 `INSERT INTO satis_fatura_detaylari
                    (fatura_id, urun_id, adet, birim_fiyat)
@@ -140,34 +144,26 @@ export async function satisFaturaOlustur({ cari_id, tarih, kalemler }) {
                 [faturaId, k.urun_id, k.adet, k.birim_fiyat]
             );
 
-            // 3b. Ürünün kritik_seviye'sini çek
-            const urunBilgiRows = await conn.query(
-                'SELECT kritik_seviye FROM urunler WHERE id = ?',
-                [k.urun_id]
+            // 2. Stok hareketi (çıkış)
+            await conn.query(
+                `INSERT INTO stok_hareketleri
+                   (urun_id, depo_id, tip, miktar, aciklama, kaynak, kaynak_id, tarih)
+                 VALUES (?, ?, 'cikis', ?, ?, 'satis_fatura', ?, ?)`,
+                [k.urun_id, depo_id, k.adet, `Satış faturası #${faturaId}`, faturaId, tarih]
             );
-            const stokTakipli = urunBilgiRows[0]?.kritik_seviye != null;
 
-            // 3c. Stok takipli ise hareket + stok düş
-            if (stokTakipli) {
-                await conn.query(
-                    `INSERT INTO stok_hareketleri
-                       (urun_id, tip, miktar, aciklama, kaynak, kaynak_id, tarih)
-                     VALUES (?, 'cikis', ?, ?, 'satis_fatura', ?, ?)`,
-                    [k.urun_id, k.adet, `Satış faturası #${faturaId}`, faturaId, tarih]
-                );
-                await conn.query(
-                    `UPDATE urunler
-                        SET stok = stok - ?, varsayilan_satis_fiyati = ?
-                      WHERE id = ?`,
-                    [k.adet, k.birim_fiyat, k.urun_id]
-                );
-            } else {
-                // Stok takibi yok → sadece fiyat güncelle
-                await conn.query(
-                    'UPDATE urunler SET varsayilan_satis_fiyati = ? WHERE id = ?',
-                    [k.birim_fiyat, k.urun_id]
-                );
-            }
+            // 3. Seçilen depodan stok düş
+            await conn.query(
+                `UPDATE urun_stok SET stok = stok - ? 
+                  WHERE urun_id = ? AND depo_id = ?`,
+                [k.adet, k.urun_id, depo_id]
+            );
+
+            // 4. Varsayılan satış fiyatını güncelle
+            await conn.query(
+                'UPDATE urunler SET varsayilan_satis_fiyati = ? WHERE id = ?',
+                [k.birim_fiyat, k.urun_id]
+            );
         }
 
         await conn.commit();

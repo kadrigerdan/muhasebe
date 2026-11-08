@@ -5,8 +5,11 @@ import { satisFaturaOlustur, satisFaturaSil, satisIadeFaturaOlustur, satisFatura
 export async function satisFaturaEkleAction(prevState, formData) {
     const cari_id = Number(formData.get('cari_id'));
     const tarih = formData.get('tarih');
-    if (!cari_id) return { error: 'Müşteri seçilmelidir.' };
+    const depo_id = Number(formData.get('depo_id')); // ← YENİ
+
+    if (!cari_id || cari_id <= 0) return { error: 'Müşteri seçilmelidir.' };
     if (!tarih) return { error: 'Tarih zorunludur.' };
+    if (!depo_id || depo_id <= 0) return { error: 'Depo seçilmelidir.' }; // ← YENİ
 
     let kalemler;
     try {
@@ -14,32 +17,43 @@ export async function satisFaturaEkleAction(prevState, formData) {
     } catch {
         return { error: 'Kalemler okunamadı.' };
     }
-    if (!kalemler.length) return { error: 'En az bir kalem eklemelisiniz.' };
+    if (!Array.isArray(kalemler) || !kalemler.length) {
+        return { error: 'En az bir kalem eklemelisiniz.' };
+    }
 
-    for (const k of kalemler) {
-        if (!k.urun_id) return { error: 'Kalemlerde ürün seçilmemiş.' };
-        if (Number(k.adet) <= 0) return { error: 'Adet 0 olamaz.' };
-        if (Number(k.birim_fiyat) < 0) return { error: 'Fiyat negatif olamaz.' };
+    const normalizedKalemler = [];
+    for (let i = 0; i < kalemler.length; i++) {
+        const k = kalemler[i] ?? {};
+        const rawUrunId = k.urun_id ?? k.urunId;
+        const urun_id = Number(rawUrunId);
+        const adet = Number(k.adet);
+        const birim_fiyat = Number(k.birim_fiyat ?? k.birimFiyat);
+
+        if (!Number.isFinite(urun_id) || urun_id <= 0) {
+            return { error: `${i + 1}. kalemde ürün seçilmemiş.` };
+        }
+        if (!Number.isFinite(adet) || adet <= 0) {
+            return { error: `${i + 1}. kalemde adet 0 olamaz.` };
+        }
+        if (!Number.isFinite(birim_fiyat) || birim_fiyat < 0) {
+            return { error: `${i + 1}. kalemde fiyat geçersiz.` };
+        }
+        normalizedKalemler.push({ urun_id, adet, birim_fiyat });
     }
 
     try {
         await satisFaturaOlustur({
-            cari_id, tarih,
-            kalemler: kalemler.map((k) => ({
-                urun_id: Number(k.urun_id),
-                adet: Number(k.adet),
-                birim_fiyat: Number(k.birim_fiyat),
-            })),
+            cari_id,
+            tarih,
+            depo_id, // ← YENİ
+            kalemler: normalizedKalemler,
         });
         revalidatePath('/satis-faturalar');
-        revalidatePath('/urunler');
         revalidatePath('/stok');
         revalidatePath('/cariler');
     } catch (err) {
         console.error('satisFaturaEkle:', err);
-        if (err?.message?.startsWith('Yetersiz stok'))
-            return { error: err.message };
-        return { error: 'Fatura kaydedilemedi.' };
+        return { error: err.message || 'Fatura kaydedilemedi.' };
     }
     return { ok: true };
 }

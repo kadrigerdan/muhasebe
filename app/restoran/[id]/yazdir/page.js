@@ -73,8 +73,9 @@ export default async function AdisyonYazdirPage({ params }) {
         <table className="w-full border-collapse mb-6">
           <thead>
             <tr className="border-b-2 border-gray-800">
+              <th className="text-left py-2 text-sm">#</th>
               <th className="text-left py-2 text-sm">Ürün</th>
-              <th className="text-right py-2 text-sm w-16">Adet</th>
+              <th className="text-right py-2 text-sm w-16">Miktar (Kg)</th>
               <th className="text-right py-2 text-sm w-24">Fiyat</th>
               <th className="text-right py-2 text-sm w-24">Tutar</th>
             </tr>
@@ -82,6 +83,7 @@ export default async function AdisyonYazdirPage({ params }) {
           <tbody>
             {adisyon.kalemler.map((k) => (
               <tr key={String(k.id)} className="border-b border-gray-200">
+                <td className="py-2 text-sm">{k.urun_id}</td>
                 <td className="py-2 text-sm">{k.urun_adi}</td>
                 <td className="py-2 text-sm text-right">{String(k.adet)}</td>
                 <td className="py-2 text-sm text-right">

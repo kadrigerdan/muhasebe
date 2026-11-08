@@ -67,7 +67,7 @@ export default async function SatisFaturaYazdirPage({ params }) {
           <thead>
             <tr className="border-b-2 border-gray-800">
               <th className="text-left py-2 text-sm">Ürün</th>
-              <th className="text-right py-2 text-sm w-20">Adet</th>
+              <th className="text-right py-2 text-sm w-20">Miktar (Kg)</th>
               <th className="text-right py-2 text-sm w-28">Birim Fiyat</th>
               <th className="text-right py-2 text-sm w-32">Toplam</th>
             </tr>

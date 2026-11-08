@@ -7,6 +7,7 @@ export default function UrunList({ urunler }) {
     <table className="w-full border-collapse border text-sm">
       <thead className="bg-gray-100">
         <tr>
+          <th className="border p-2 text-left">#</th>
           <th className="border p-2 text-left">Ürün Adı</th>
           <th className="border p-2 text-center">Tip</th>
           <th className="border p-2 text-right">Alış Fiyatı</th>
@@ -21,7 +22,7 @@ export default function UrunList({ urunler }) {
       <tbody>
         {urunler.length === 0 && (
           <tr>
-            <td colSpan={9} className="border p-4 text-center text-gray-500">
+            <td colSpan={10} className="border p-4 text-center text-gray-500">
               Ürün yok.
             </td>
           </tr>
@@ -39,6 +40,13 @@ export default function UrunList({ urunler }) {
               key={String(u.id)}
               className={tukendi ? 'bg-red-50' : kritikMi ? 'bg-yellow-50' : ''}
             >
+              {/* 1. ÜRÜN ID */}
+              <td className="border p-2 text-center">
+                <a href={`/urunler/${u.id}`} className="text-blue-600 hover:underline">
+                  {String(u.id)}
+                </a>
+              </td>
+
               {/* 1. ÜRÜN ADI */}
               <td className="border p-2 font-medium">{u.urun_adi}</td>
 
