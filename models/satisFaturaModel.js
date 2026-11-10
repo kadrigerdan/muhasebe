@@ -119,10 +119,11 @@ export async function satisFaturaOlustur({ cari_id, tarih, depo_id, kalemler }) 
             const stok = stokRows[0];
             if (!stok) throw new Error(`Ürün bu depoda yok: ${k.urun_id}`);
 
-            // Sadece kritik_seviye varsa stok kontrolü
-            if (stok.kritik_seviye != null && Number(stok.stok) < Number(k.adet)) {
+            // Kritik seviyeden bağımsız olarak, stok miktarı yeterli mi?
+            // Her zaman stok kontrolü — kritik seviyeden bağımsız
+            if (Number(stok.stok) < Number(k.adet)) {
                 throw new Error(
-                    `Yetersiz stok: ${stok.urun_adi} (depo: ${depo_id}, mevcut: ${stok.stok}, istenen: ${k.adet})`
+                    `Yetersiz stok: ${stok.urun_adi} (mevcut: ${stok.stok}, istenen: ${k.adet})`
                 );
             }
         }

@@ -17,7 +17,11 @@ export default async function AnaSayfa() {
     query('SELECT COUNT(*) AS toplam FROM cariler WHERE aktif = 1'),
     query('SELECT COUNT(*) AS toplam FROM urunler WHERE durum = 1'),
     query('SELECT COUNT(*) AS toplam FROM personel WHERE aktif = 1'),
-    query('SELECT COALESCE(SUM(stok * varsayilan_alis_fiyati), 0) AS deger FROM urunler WHERE durum = 1'),
+    query(`SELECT COALESCE(SUM(us.stok * u.varsayilan_alis_fiyati), 0) AS deger 
+           FROM urun_stok us
+           JOIN urunler u ON u.id = us.urun_id
+           WHERE u.durum = 1
+`),
 
     query('SELECT COALESCE(SUM(d.miktar * d.birim_fiyat), 0) AS toplam FROM alis_faturalar f JOIN alis_fatura_detaylari d ON d.fatura_id = f.id'),
     query('SELECT COALESCE(SUM(d.adet * d.birim_fiyat), 0) AS toplam FROM satis_faturalar f JOIN satis_fatura_detaylari d ON d.fatura_id = f.id'),

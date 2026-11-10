@@ -1,5 +1,4 @@
 'use client';
-
 import { useActionState, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { satisFaturaEkleAction } from '@/actions/satisFaturaActions';
@@ -8,6 +7,7 @@ import SatisFaturaKalemEditor from './SatisFaturaKalemEditor';
 export default function SatisFaturaForm({ cariler, urunler, depolar, onSuccess }) {
   const router = useRouter();
   const [kalemler, setKalemler] = useState([]);
+  const [depo_id, setDepoId] = useState('1');
   const [state, formAction, pending] = useActionState(satisFaturaEkleAction, null);
 
   useEffect(() => {
@@ -48,7 +48,12 @@ export default function SatisFaturaForm({ cariler, urunler, depolar, onSuccess }
         {/* YENİ: DEPO SEÇİMİ */}
         <div>
           <label className="block font-medium mb-1">Depo *</label>
-          <select name="depo_id" required defaultValue="1" className="w-full border rounded px-3 py-2">
+          <select
+            name="depo_id"
+            required
+            value={depo_id}
+            onChange={(e) => setDepoId(e.target.value)}
+            className="w-full border rounded px-3 py-2">
             {depolar?.map((d) => (
               <option key={d.id} value={d.id}>{d.ad}</option>
             ))}
@@ -56,7 +61,11 @@ export default function SatisFaturaForm({ cariler, urunler, depolar, onSuccess }
         </div>
       </div>
 
-      <SatisFaturaKalemEditor urunler={urunler} onChange={setKalemler} />
+      <SatisFaturaKalemEditor
+        urunler={urunler}
+        depoId={Number(depo_id)}
+        onChange={setKalemler}
+      />
 
       <button
         type="submit"

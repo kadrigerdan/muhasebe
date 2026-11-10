@@ -3,7 +3,7 @@
 import { paraFormat } from '@/lib/format';
 import { useState } from 'react';
 
-export default function SatisFaturaKalemEditor({ urunler, onChange }) {
+export default function SatisFaturaKalemEditor({ urunler, depoId, onChange }) {
   const [kalemler, setKalemler] = useState([]);
 
   function guncelle(next) {
@@ -71,11 +71,13 @@ export default function SatisFaturaKalemEditor({ urunler, onChange }) {
           )}
           {kalemler.map((k, i) => {
             const satir = Number(k.adet || 0) * Number(k.birim_fiyat || 0);
-
-            // Stok yeterliliği kontrolü (uyarı)
             const u = urunler.find((x) => String(x.id) === String(k.urun_id));
             const stokYetersiz =
               u && u.kritik_seviye != null && Number(k.adet) > Number(u.stok)
+            const mevcutStok = u?.stoklar?.[depoId] ?? 0;
+            const yetersizStok = u && u.kritik_seviye != null && mevcutStok < Number(k.adet);
+
+            // Stok yeterliliği kontrolü (uyarı)
             return (
               <tr key={i} className={stokYetersiz ? 'bg-red-50' : ''}>
                 <td className="border p-1">
@@ -86,17 +88,18 @@ export default function SatisFaturaKalemEditor({ urunler, onChange }) {
                   >
                     <option value="">-- Seç --</option>
                     {urunler.map((u) => {
-
+                      const stok = depoId ? (u.stoklar[depoId] ?? 0) : null;
+                      const stokText = stok !== null ? ` (stok: ${stok})` : '';
                       return (
                         <option key={u.id} value={u.id}>
-                          {u.urun_adi} — Alış: {paraFormat(u.varsayilan_alis_fiyati)} ₺ | Satış: {paraFormat(u.varsayilan_satis_fiyati)} ₺ {u.kritik_seviye !== null && ` (stok: ${u.stok})`}
+                          {u.urun_adi} — Alış: {paraFormat(u.varsayilan_alis_fiyati)} ₺ | Satış: {paraFormat(u.varsayilan_satis_fiyati)} ₺{stokText}
                         </option>
                       );
                     })}
                   </select>
-                  {u && u.kritik_seviye != null && Number(k.adet) > Number(u.stok) && (
+                  {yetersizStok && (
                     <div className="text-xs text-red-600">
-                      ⚠ Yetersiz stok (mevcut: {u.stok})
+                      ⚠ Yetersiz stok (seçili depoda mevcut: {mevcutStok})
                     </div>
                   )}
                 </td>

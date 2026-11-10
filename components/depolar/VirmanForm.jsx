@@ -1,14 +1,14 @@
 'use client';
-import { useActionState, useEffect } from 'react';
+import { useActionState, useEffect, useState } from 'react';
 import { stokTransferAction } from '@/actions/transferActions';
 
 export default function VirmanForm({ depolar, urunler }) {
   const [state, formAction, pending] = useActionState(stokTransferAction, null);
+  const [gonderenDepo, setGonderenDepo] = useState('');
 
   useEffect(() => {
     if (state?.ok) {
       alert('Transfer başarılı!');
-      // Formu temizlemek için basitçe sayfayı yeniliyoruz
       window.location.reload();
     }
   }, [state]);
@@ -24,7 +24,13 @@ export default function VirmanForm({ depolar, urunler }) {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <label className="block font-medium mb-1">Gönderen Depo *</label>
-          <select name="gonderen_depo_id" required className="w-full border rounded px-3 py-2">
+          <select
+            name="gonderen_depo_id"
+            required
+            value={gonderenDepo}
+            onChange={(e) => setGonderenDepo(e.target.value)}
+            className="w-full border rounded px-3 py-2"
+          >
             <option value="">-- Seç --</option>
             {depolar.map((d) => (
               <option key={d.id} value={d.id}>{d.ad}</option>
@@ -46,14 +52,20 @@ export default function VirmanForm({ depolar, urunler }) {
           <label className="block font-medium mb-1">Ürün *</label>
           <select name="urun_id" required className="w-full border rounded px-3 py-2">
             <option value="">-- Seç --</option>
-            {urunler.map((u) => (
-              <option key={u.id} value={u.id}>{u.urun_adi}</option>
-            ))}
+            {urunler.map((u) => {
+              const stok = gonderenDepo ? (u.stoklar[gonderenDepo] ?? 0) : null;
+              const stokText = stok !== null ? ` (stok: ${stok.toLocaleString('tr-TR')})` : '';
+              return (
+                <option key={u.id} value={u.id}>
+                  {u.urun_adi}{stokText}
+                </option>
+              );
+            })}
           </select>
         </div>
 
         <div>
-          <label className="block font-medium mb-1">Miktar (Kg)</label>
+          <label className="block font-medium mb-1">Miktar (Kg) *</label>
           <input
             type="number"
             name="miktar"
