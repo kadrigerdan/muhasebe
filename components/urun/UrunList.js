@@ -79,7 +79,22 @@ export default function UrunList({ urunler }) {
               </td>
 
               {/* 6. STOK */}
-              <td className="border p-2 text-right font-medium">{u.kritik_seviye === null ? '—' : String(u.stok)}</td>
+              <td className="border p-2 text-right">
+                {u.depolar && u.depolar.length > 0 ? (
+                  <div className="space-y-0.5">
+                    {u.depolar.map((d, i) => (
+                      <div key={i} className="text-xs whitespace-nowrap">
+                        <span className="text-gray-600">{d.depo}:</span>{' '}
+                        <span className="font-medium text-gray-900">
+                          {d.stok.toLocaleString('tr-TR')}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <span className="text-gray-400 text-xs">—</span>
+                )}
+              </td>
 
               {/* 7. KRİTİK */}
               <td className="border p-2 text-right text-gray-500">

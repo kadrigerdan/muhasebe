@@ -30,12 +30,11 @@ export async function urunGetir(id) {
 
 export async function urunOlustur(veri) {
   const res = await query(
-    `INSERT INTO urunler
+    `INSERT INTO urunler 
        (urun_adi, tip, kritik_seviye, varsayilan_alis_fiyati, varsayilan_satis_fiyati, durum, stok)
      VALUES (?, ?, ?, ?, ?, ?, ?)`,
     [
-      veri.urun_adi,
-      veri.tip ?? 'hammadde',
+      veri.urun_adi, veri.tip ?? 'hammadde',
       veri.kritik_seviye ?? null,
       veri.varsayilan_alis_fiyati ?? 0,
       veri.varsayilan_satis_fiyati ?? 0,
@@ -43,29 +42,51 @@ export async function urunOlustur(veri) {
       veri.stok ?? 0,
     ]
   );
-  return Number(res.insertId);
+  const urunId = Number(res.insertId);
+
+  // YENİ: Başlangıç stoğu varsa varsayılan depoya (1 = Kasap Deposu) ekle
+  if (veri.stok && Number(veri.stok) > 0) {
+    await query(
+      `INSERT INTO urun_stok (urun_id, depo_id, stok) 
+             VALUES (?, 1, ?) 
+             ON DUPLICATE KEY UPDATE stok = stok + VALUES(stok)`,
+      [urunId, veri.stok]
+    );
+  }
+
+  return urunId;
 }
 
 export async function urunGuncelleDB(id, veri) {
+  // Mevcut stoğu al
+  const eski = await query('SELECT stok FROM urunler WHERE id = ?', [id]);
+  const eskiStok = Number(eski[0]?.stok ?? 0);
+
   const res = await query(
     `UPDATE urunler
-        SET urun_adi = ?,
-            tip = ?,
-            kritik_seviye = ?,
-            varsayilan_alis_fiyati = ?,
-            varsayilan_satis_fiyati = ?,
-            durum = ?
+        SET urun_adi = ?, tip = ?, kritik_seviye = ?, 
+            varsayilan_alis_fiyati = ?, varsayilan_satis_fiyati = ?, 
+            durum = ?, stok = ?
       WHERE id = ?`,
     [
-      veri.urun_adi,
-      veri.tip ?? 'hammadde',
-      veri.kritik_seviye ?? null,
-      veri.varsayilan_alis_fiyati ?? 0,
-      veri.varsayilan_satis_fiyati ?? 0,
-      veri.durum ?? 1,
-      id,
+      veri.urun_adi, veri.tip, veri.kritik_seviye ?? null,
+      veri.varsayilan_alis_fiyati ?? 0, veri.varsayilan_satis_fiyati ?? 0,
+      veri.durum ?? 1, veri.stok ?? 0, id,
     ]
   );
+
+  // YENİ: Stok değiştiyse farkı depoya yansıt (1 = Kasap Deposu)
+  const yeniStok = Number(veri.stok ?? 0);
+  const fark = yeniStok - eskiStok;
+  if (fark !== 0) {
+    await query(
+      `INSERT INTO urun_stok (urun_id, depo_id, stok) 
+             VALUES (?, 1, ?) 
+             ON DUPLICATE KEY UPDATE stok = stok + VALUES(stok)`,
+      [id, fark]
+    );
+  }
+
   return Number(res.affectedRows);
 }
 
@@ -76,13 +97,22 @@ export async function urunSilDB(id) {
 
 // Stok değeri hesabı için ek
 export async function urunOzet() {
-  const rows = await query(
-    `SELECT
-       COUNT(*) AS toplam_urun,
-       SUM(CASE WHEN durum = 1 THEN 1 ELSE 0 END) AS aktif_urun,
-       COALESCE(SUM(CASE WHEN durum = 1 THEN stok * varsayilan_alis_fiyati ELSE 0 END), 0) AS stok_degeri_alis,
-       COALESCE(SUM(CASE WHEN durum = 1 THEN stok * varsayilan_satis_fiyati ELSE 0 END), 0) AS stok_degeri_satis
-     FROM urunler`
-  );
+  const rows = await query(`
+        SELECT
+            (SELECT COUNT(*) FROM urunler) AS toplam_urun,
+            (SELECT COUNT(*) FROM urunler WHERE durum = 1) AS aktif_urun,
+            COALESCE((
+                SELECT SUM(us.stok * u.varsayilan_alis_fiyati)
+                  FROM urun_stok us
+                  JOIN urunler u ON u.id = us.urun_id
+                 WHERE u.durum = 1
+            ), 0) AS stok_degeri_alis,
+            COALESCE((
+                SELECT SUM(us.stok * u.varsayilan_satis_fiyati)
+                  FROM urun_stok us
+                  JOIN urunler u ON u.id = us.urun_id
+                 WHERE u.durum = 1
+            ), 0) AS stok_degeri_satis
+    `);
   return rows[0];
 }

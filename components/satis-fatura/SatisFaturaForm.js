@@ -25,23 +25,16 @@ export default function SatisFaturaForm({ cariler, urunler, depolar, onSuccess }
 
       <input type="hidden" name="kalemler" value={JSON.stringify(kalemler)} />
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-3 gap-4">
         <div>
           <label className="block font-medium mb-1">Müşteri *</label>
-          <select
-            name="cari_id"
-            required
-            className="w-full border rounded px-3 py-2"
-          >
+          <select name="cari_id" required className="w-full border rounded px-3 py-2">
             <option value="">-- Seç --</option>
             {cariler.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.unvan}-{c.telefon}-{c.adres}
-              </option>
+              <option key={c.id} value={c.id}>{c.unvan}</option>
             ))}
           </select>
         </div>
-
         <div>
           <label className="block font-medium mb-1">Tarih *</label>
           <input
@@ -52,21 +45,15 @@ export default function SatisFaturaForm({ cariler, urunler, depolar, onSuccess }
             className="w-full border rounded px-3 py-2"
           />
         </div>
-
+        {/* YENİ: DEPO SEÇİMİ */}
         <div>
           <label className="block font-medium mb-1">Depo *</label>
-          <select
-            name="depolar_id"
-            required
-            defaultValue=""  // Kasap Deposu varsayılan
-            className="w-full border rounded px-3 py-2"
-          >
-            {depolar.map((d) => (
+          <select name="depo_id" required defaultValue="1" className="w-full border rounded px-3 py-2">
+            {depolar?.map((d) => (
               <option key={d.id} value={d.id}>{d.ad}</option>
             ))}
           </select>
         </div>
-
       </div>
 
       <SatisFaturaKalemEditor urunler={urunler} onChange={setKalemler} />

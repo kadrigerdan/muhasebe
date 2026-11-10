@@ -19,13 +19,16 @@ export default async function DepolarPage() {
 
   return (
     <div className="p-6 max-w-5xl mx-auto space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Depolar</h1>
+      <div className="flex items-center justify-around gap-6">
+        <h1 className="text-2xl font-bold ">Depolar</h1>
         <Link
           href="/depolar/virman"
           className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 text-sm"
         >
           ↔️ Virman Yap
+        </Link>
+        <Link href="/depolar/uretim" className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 text-sm">
+          🔪 Parçalama Yap
         </Link>
       </div>
 

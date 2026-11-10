@@ -60,12 +60,13 @@ export default async function DepoDetayPage({ params }) {
             <th className="border p-2 text-right">Stok</th>
             <th className="border p-2 text-right">Kritik Seviye</th>
             <th className="border p-2 text-center">Durum</th>
+            <th className="border p-2 text-center w-24">İşlem</th>
           </tr>
         </thead>
         <tbody>
           {urunler.length === 0 && (
             <tr>
-              <td colSpan={6} className="border p-4 text-center text-gray-500">
+              <td colSpan={7} className="border p-4 text-center text-gray-500">
                 Bu depoda ürün yok.
               </td>
             </tr>
@@ -101,6 +102,19 @@ export default async function DepoDetayPage({ params }) {
                     <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded">
                       ✓ Normal
                     </span>
+                  )}
+                </td>
+                <td className="border p-2 text-center">
+                  {u.tip === 'hammadde' && stok > 0 ? (
+                    <Link
+                      href={`/depolar/uretim?hammadde_id=${u.urun_id}&miktar=${u.stok}`}
+                      className="inline-block bg-green-600 text-white text-xs px-2 py-1 rounded hover:bg-green-700"
+                      title="Bu ürünü işle"
+                    >
+                      🔪 İşle
+                    </Link>
+                  ) : (
+                    <span className="text-xs text-gray-300">—</span>
                   )}
                 </td>
               </tr>

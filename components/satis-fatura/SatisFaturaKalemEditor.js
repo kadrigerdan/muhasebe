@@ -74,7 +74,6 @@ export default function SatisFaturaKalemEditor({ urunler, onChange }) {
 
             // Stok yeterliliği kontrolü (uyarı)
             const u = urunler.find((x) => String(x.id) === String(k.urun_id));
-            console.log('DEBUG urun:', k.urun_id, '| kritik_seviye:', u?.kritik_seviye, '| typeof:', typeof u?.kritik_seviye);
             const stokYetersiz =
               u && u.kritik_seviye != null && Number(k.adet) > Number(u.stok)
             return (
@@ -87,7 +86,7 @@ export default function SatisFaturaKalemEditor({ urunler, onChange }) {
                   >
                     <option value="">-- Seç --</option>
                     {urunler.map((u) => {
-                      console.log('DEBUG ÜRÜN:', u.urun_adi, '| stok:', u.stok, '| kritik_seviye:', u.kritik_seviye);
+
                       return (
                         <option key={u.id} value={u.id}>
                           {u.urun_adi} — Alış: {paraFormat(u.varsayilan_alis_fiyati)} ₺ | Satış: {paraFormat(u.varsayilan_satis_fiyati)} ₺ {u.kritik_seviye !== null && ` (stok: ${u.stok})`}

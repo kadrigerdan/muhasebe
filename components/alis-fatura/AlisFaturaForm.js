@@ -43,6 +43,12 @@ export default function AlisFaturaForm({ cariler, urunler, depolar, onSuccess })
     e.currentTarget.elements.kalemler.value = JSON.stringify(gecerliKalemler);
   };
 
+  // Form submit sırasında değil, butona basıldığında test için:
+  const testSubmit = (e) => {
+    e.preventDefault();
+    const fd = new FormData(e.currentTarget);
+  };
+
   return (
     <form action={formAction} onSubmit={onSubmit} className="space-y-4">
       {state?.error && (
@@ -86,7 +92,7 @@ export default function AlisFaturaForm({ cariler, urunler, depolar, onSuccess })
         <div>
           <label className="block font-medium mb-1">Depo *</label>
           <select
-            name="depolar_id"
+            name="depo_id"
             required
             defaultValue=""  // Kasap Deposu varsayılan
             className="w-full border rounded px-3 py-2"
