@@ -220,13 +220,13 @@ export async function alisIadeFaturaOlustur({ kaynak_fatura_id, tarih, kalemler 
                     `INSERT INTO stok_hareketleri
            (urun_id, tip, miktar, aciklama, kaynak, kaynak_id, tarih)
          VALUES (?, 'iade', ?, ?, 'satis_fatura', ?, ?)`,
-                    [k.urun_id, k.adet, `Satış iadesi #${yeniFaturaId}`, yeniFaturaId, tarih]
+                    [k.urun_id, k.miktar, `Satış iadesi #${yeniFaturaId}`, yeniFaturaId, tarih]
                 );
 
                 // Stok artır
                 await conn.query(
                     'UPDATE urunler SET stok = stok + ? WHERE id = ?',
-                    [k.adet, k.urun_id]
+                    [k.miktar, k.urun_id]
                 );
             }
         }
@@ -264,7 +264,7 @@ export async function alisIadeFaturaOlustur({ kaynak_fatura_id, tarih, kalemler 
 
         if (netBorc <= 0.01) {
             const iadeToplam = kalemler.reduce(
-                (s, k) => s + Number(k.adet) * Number(k.birim_fiyat), 0
+                (s, k) => s + Number(k.miktar) * Number(k.birim_fiyat), 0
             );
             // Ödeme kaydı (kasadan düşülmez)
             await conn.query(
@@ -506,6 +506,15 @@ export async function alisFaturaOlustur({ cari_id, tarih, depo_id, kalemler }) {
     } finally {
         conn.release();
     }
+}
+
+export async function depoListesi() {
+    return await query(`SELECT id, ad FROM depolar ORDER BY ad`);
+}
+
+export async function depoGetir(id) {
+    const rows = await query(`SELECT id, ad FROM depolar WHERE id = ?`, [id]);
+    return rows[0] ?? null;
 }
 
 export async function alisIadeOdemeEkle(faturaId, veri) {

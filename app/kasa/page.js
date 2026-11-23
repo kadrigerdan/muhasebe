@@ -42,9 +42,9 @@ export default async function KasaPage() {
       </div>
 
       {/* Tip Bazlı Özet */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 min-[800px]:grid-cols-2 gap-4">
         <div className="border rounded-lg p-4 bg-white">
-          <div className="text-xs text-gray-500 mb-1">Nakit (Fiziksel)</div>
+          <div className="text-xs text-gray-500 mb-1">Nakit </div>
           <div className="text-2xl font-bold text-green-700">
             {paraFormat(tipOzet.nakit)} ₺
           </div>
@@ -73,15 +73,15 @@ export default async function KasaPage() {
       </div>
 
       {/* Kasa Kartları */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 min-[800px]:grid-cols-3 gap-4">
         {hesaplar.map((k) => (
           <Link key={String(k.id)} href={`/kasa/${k.id}`}
             className="border rounded-lg p-4 bg-white hover:shadow-md transition">
             <div className="flex items-center justify-between mb-2">
               <div className="font-bold">{k.ad}</div>
               <span className={`text-xs px-2 py-0.5 rounded ${k.tip === 'nakit' ? 'bg-green-100 text-green-700' :
-                  k.tip === 'banka' ? 'bg-blue-100 text-blue-700' :
-                    'bg-purple-100 text-purple-700'
+                k.tip === 'banka' ? 'bg-blue-100 text-blue-700' :
+                  'bg-purple-100 text-purple-700'
                 }`}>
                 {k.tip}
               </span>

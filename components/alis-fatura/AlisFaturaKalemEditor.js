@@ -3,22 +3,17 @@
 import { useState } from 'react';
 import { paraFormat } from '@/lib/format';
 
-export default function AlisFaturaKalemEditor({ urunler, onChange }) {
+export default function AlisFaturaKalemEditor({ urunler, depoId, onChange, depolar }) {
   const [kalemler, setKalemler] = useState([]);
 
-  function guncelle(next) {
-    setKalemler(next);
-    onChange?.(next);
-  }
+  function guncelle(next) { setKalemler(next); onChange?.(next); }
 
   function kalemEkle() {
     guncelle([...kalemler, { urun_id: '', miktar: 1, birim_fiyat: 0 }]);
   }
-
   function kalemSil(i) {
     guncelle(kalemler.filter((_, idx) => idx !== i));
   }
-
   function alanDegis(i, alan, deger) {
     const next = [...kalemler];
     next[i] = { ...next[i], [alan]: deger };
@@ -37,6 +32,9 @@ export default function AlisFaturaKalemEditor({ urunler, onChange }) {
     0
   );
   const toplamMiktar = kalemler.reduce((s, k) => s + Number(k.miktar || 0), 0);
+
+  const aktifDepo = depolar?.find((d) => String(d.id) === String(depoId));
+
 
   return (
     <div className="space-y-3">
@@ -58,7 +56,7 @@ export default function AlisFaturaKalemEditor({ urunler, onChange }) {
             <th className="border p-2 w-24">Miktar (Kg)</th>
             <th className="border p-2 w-28">Birim Fiyat</th>
             <th className="border p-2 w-28 text-right">Satır</th>
-            <th className="border p-2 w-12"></th>
+            <th className="border p-2 w-12">Sil</th>
           </tr>
         </thead>
         <tbody>
@@ -70,46 +68,92 @@ export default function AlisFaturaKalemEditor({ urunler, onChange }) {
             </tr>
           )}
           {kalemler.map((k, i) => {
-            const satir = Number(k.miktar || 0) * Number(k.birim_fiyat || 0);
+            const miktar = Number(k.miktar || 0);
+            const satir = miktar * Number(k.birim_fiyat || 0);
+            const secili = urunler.find((x) => String(x.id) === String(k.urun_id));
+
+
+            const mevcutStok = Array.isArray(secili?.stoklar)
+              ? (secili.stoklar.find((s) => String(s.depolar_id) === String(depoId))?.miktar ?? 0)
+              : (secili?.stoklar?.[depoId] ?? 0);
+            const yetersizStok =
+              secili && secili.kritik_seviye != null && mevcutStok < miktar;
+
+            // stoklar hem array hem obje gelebilir → tek forma indir
+            const stokListesi = Array.isArray(secili?.stoklar)
+              ? secili.stoklar
+              : secili?.stoklar && typeof secili.stoklar === 'object'
+                ? Object.entries(secili.stoklar).map(([depo_id, miktar]) => ({
+                  depo_id: Number(depo_id),
+                  miktar: Number(miktar),
+                }))
+                : [];
+
+            const depoAdi = (id) =>
+              depolar.find((d) => String(d.id) === String(id))?.ad ?? `Depo ${id}`;
+
+
 
             return (
-              <tr key={i}>
+              <tr key={i} className={yetersizStok ? 'bg-red-50' : ''}>
                 <td className="border p-1">
                   <select
-                    value={k.urun_id ?? ''}
+                    value={k.urun_id}
                     onChange={(e) => alanDegis(i, 'urun_id', e.target.value)}
                     className="w-full border rounded px-2 py-1"
                   >
-                    <option value="">— Ürün seçin —</option>          {/* ← EKLE */}
-                    {urunler.map((u) => (
-                      <option key={u.id} value={u.id}>
-                        {u.urun_adi} — Alış: {paraFormat(u.varsayilan_alis_fiyati)} ₺ | Satış: {paraFormat(u.varsayilan_satis_fiyati)} ₺
-                        {u.kritik_seviye !== null && ` (stok: ${u.stok})`}
-                      </option>
-                    ))}
+                    <option value="">-- Seç --</option>
+                    {urunler.map((u) => {
+                      const stok = depoId
+                        ? (Array.isArray(u.stoklar)
+                          ? (u.stoklar.find((s) => String(s.depo_id ?? s.depolar_id) === String(depoId))?.miktar ?? 0)
+                          : (u.stoklar?.[depoId] ?? 0))
+                        : null;
+
+                      const stokText =
+                        stok !== null
+                          ? ` — ${aktifDepo?.ad ?? `Depo ${depoId}`}: ${stok}`
+                          : '';
+
+                      return (
+                        <option key={u.id} value={u.id}>
+                          {u.urun_adi} — Alış: {paraFormat(u.varsayilan_alis_fiyati)} ₺— Satış: {paraFormat(u.varsayilan_satis_fiyati)} ₺{stokText}
+                        </option>
+                      );
+                    })}
                   </select>
+
+
+
+
                 </td>
+
                 <td className="border p-1">
                   <input
                     type="number"
                     min="1"
                     step="1"
-                    value={k.miktar}
+                    value={k.miktar ?? ''}
                     onChange={(e) => alanDegis(i, 'miktar', e.target.value)}
                     className="w-full border rounded px-2 py-1"
                   />
                 </td>
+
                 <td className="border p-1">
                   <input
                     type="number"
                     min="0"
                     step="0.01"
-                    value={k.birim_fiyat}
+                    value={k.birim_fiyat ?? ''}
                     onChange={(e) => alanDegis(i, 'birim_fiyat', e.target.value)}
                     className="w-full border rounded px-2 py-1"
                   />
                 </td>
-                <td className="border p-1 text-right">{paraFormat(satir)} ₺</td>
+
+                <td className="border p-1 text-right">
+                  {paraFormat(satir)} ₺
+                </td>
+
                 <td className="border p-1 text-center">
                   <button
                     type="button"

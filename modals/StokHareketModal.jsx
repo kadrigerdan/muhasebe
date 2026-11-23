@@ -3,7 +3,7 @@ import { useEffect, useState, useActionState } from "react";
 import { createPortal } from "react-dom";
 import { stokHareketEkleAction, getStokHareketleriAction, } from "@/actions/stokActions";
 
-export function StokHareketModal({ urun, isOpen, onClose, kaydedildi }) {
+export function StokHareketModal({ urun, isOpen, depolar, onClose, kaydedildi }) {
   const [mounted, setMounted] = useState(false);
   const [hareketler, setHareketler] = useState([]);
   const [yukleniyor, setYukleniyor] = useState(false);
@@ -77,6 +77,16 @@ export function StokHareketModal({ urun, isOpen, onClose, kaydedildi }) {
             >
               <option value="giris">Giriş</option>
               <option value="cikis">Çıkış</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-xs mb-1">Depolar</label>
+            <select name="depo_id" required >
+              <option value="">--Depo Seç--</option>
+              {depolar.map((d) => (
+                <option key={d.id} value={d.id}>{d.id}</option>
+              ))}
             </select>
           </div>
 

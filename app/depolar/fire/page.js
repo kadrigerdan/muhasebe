@@ -95,7 +95,7 @@ export default async function FireRaporPage({ searchParams }) {
       </form>
 
       {/* Özet Kartları */}
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
         <div className="border rounded-lg p-4 bg-orange-50">
           <div className="text-xs text-orange-800">Toplam Fire</div>
           <div className="text-2xl font-bold text-orange-900">
@@ -139,13 +139,13 @@ export default async function FireRaporPage({ searchParams }) {
         <table className="w-full border-collapse text-sm">
           <thead className="bg-gray-100">
             <tr>
-              <th className="border p-2 text-center w-16">#</th>
-              <th className="border p-2 text-left">Tarih</th>
-              <th className="border p-2 text-left">Depo</th>
-              <th className="border p-2 text-left">Hammadde</th>
-              <th className="border p-2 text-right">Fire (kg)</th>
-              <th className="border p-2 text-right">Değer</th>
-              <th className="border p-2 text-center">Üretim #</th>
+              <th className="border p-2 ">#</th>
+              <th className="border p-2 ">Tarih</th>
+              <th className="border p-2 ">Depo</th>
+              <th className="border p-2 ">Ham Madde</th>
+              <th className="border p-2 ">Fire (kg)</th>
+              <th className="border p-2 ">Değer</th>
+              <th className="border p-2 ">Üretim #</th>
             </tr>
           </thead>
           <tbody>
@@ -164,10 +164,10 @@ export default async function FireRaporPage({ searchParams }) {
                 </td>
                 <td className="border p-2">{k.depo_adi}</td>
                 <td className="border p-2">{k.urun_adi}</td>
-                <td className="border p-2 text-right font-medium text-orange-700">
+                <td className="border p-2 font-medium text-orange-700">
                   {sayiFormat(k.miktar)} kg
                 </td>
-                <td className="border p-2 text-right text-red-700">
+                <td className="border p-2 text-red-700">
                   {paraFormat(k.fire_degeri)} ₺
                 </td>
                 <td className="border p-2 text-center">

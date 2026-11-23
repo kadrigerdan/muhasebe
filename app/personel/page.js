@@ -12,8 +12,8 @@ export default async function PersonelListPage() {
     ]);
 
     return (
-        <div className="p-6 max-w-7xl mx-auto space-y-6">
-            <div className="flex items-center justify-between">
+        <div className="p-2 m-1 overflow-x-auto">
+            <div className="flex flex-wrap items-center justify-around gap-2 m-2">
                 <h1 className="text-2xl font-bold">Personel</h1>
                 <Link
                     href="/personel/yeni"
@@ -23,7 +23,7 @@ export default async function PersonelListPage() {
                 </Link>
             </div>
 
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-3 my-2 gap-3">
                 <div className="border rounded p-3 bg-white">
                     <div className="text-xs text-gray-500">Aktif Personel</div>
                     <div className="text-xl font-bold">{String(ozet.aktif_personel)}</div>
@@ -39,8 +39,9 @@ export default async function PersonelListPage() {
                     </div>
                 </div>
             </div>
-
-            <PersonelList personel={personel} />
+            <div className=''>
+                <PersonelList personel={personel} />
+            </div>
         </div>
     );
 }

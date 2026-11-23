@@ -1,5 +1,5 @@
 'use client';
-
+import { stokTransferAction } from '@/actions/transferActions';
 import { paraFormat } from '@/lib/format';
 import { useState } from 'react';
 
@@ -72,14 +72,19 @@ export default function SatisFaturaKalemEditor({ urunler, depoId, onChange }) {
           {kalemler.map((k, i) => {
             const satir = Number(k.adet || 0) * Number(k.birim_fiyat || 0);
             const u = urunler.find((x) => String(x.id) === String(k.urun_id));
-            const stokYetersiz =
-              u && u.kritik_seviye != null && Number(k.adet) > Number(u.stok)
             const mevcutStok = u?.stoklar?.[depoId] ?? 0;
-            const yetersizStok = u && u.kritik_seviye != null && mevcutStok < Number(k.adet);
+
+            const stokYok = u && mevcutStok <= 0;                                  // 🔴 stok 0
+            const adetFazla = u && Number(k.adet) > mevcutStok;                    // 🟠 adet > stok
+            const kritikYakin =
+              Boolean(u) && u.kritik_seviye != null && mevcutStok > 0 &&
+              mevcutStok <= u.kritik_seviye;
+
+            const yetersizStok = Boolean(u) && (stokYok || adetFazla);
 
             // Stok yeterliliği kontrolü (uyarı)
             return (
-              <tr key={i} className={stokYetersiz ? 'bg-red-50' : ''}>
+              <tr key={i} className={yetersizStok ? 'bg-red-50' : ''}>
                 <td className="border p-1">
                   <select
                     value={k.urun_id}
@@ -97,9 +102,19 @@ export default function SatisFaturaKalemEditor({ urunler, depoId, onChange }) {
                       );
                     })}
                   </select>
-                  {yetersizStok && (
-                    <div className="text-xs text-red-600">
-                      ⚠ Yetersiz stok (seçili depoda mevcut: {mevcutStok})
+                  {stokYok && (
+                    <div className="text-xs text-red-600 font-medium mt-1">
+                      🚫 Stokta yok
+                    </div>
+                  )}
+                  {adetFazla && (
+                    <div className="text-xs text-amber-600 mt-1">
+                      ⚠ Yetersiz stok — mevcut: {mevcutStok}, istenen: {k.adet}
+                    </div>
+                  )}
+                  {!yetersizStok && kritikYakin && (
+                    <div className="text-xs text-amber-500 mt-1">
+                      ⚠ Kritik seviyede (mevcut: {mevcutStok}, kritik: {u.kritik_seviye})
                     </div>
                   )}
                 </td>

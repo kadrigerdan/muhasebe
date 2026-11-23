@@ -14,6 +14,7 @@ export function StokTablosu() {
   const [sadeceKritik, setSadeceKritik] = useState(false);
   const [duzenlenecek, setDuzenlenecek] = useState(null);
   const [hareketUrunu, setHareketUrunu] = useState(null);
+  const [depolar, setDepolar] = useState([]);
 
   const yukle = async () => {
     setYukleniyor(true);
@@ -28,20 +29,31 @@ export function StokTablosu() {
 
   const filtreli = useMemo(() => {
     const q = arama.trim().toLocaleLowerCase("tr");
-    return urunler.filter((u) => {
-      const eslesme = !q || u.urun_adi?.toLocaleLowerCase("tr").includes(q);
-      const kritik = u.tip === 'hammadde'
-        && u.kritik_seviye !== null
-        && Number(u.stok) <= Number(u.kritik_seviye);
-      return eslesme && (!sadeceKritik || kritik);
-    });
+    return urunler
+      .filter((u) => {
+        const eslesme = !q || u.urun_adi?.toLocaleLowerCase("tr").includes(q);
+        const kritik =
+          u.tip === "hammadde" &&
+          u.kritik_seviye !== null &&
+          Number(u.stok) <= Number(u.kritik_seviye);
+        return eslesme && (!sadeceKritik || kritik);
+      })
+      .sort((a, b) => {
+        const aHam = a.tip === "hammadde" ? 0 : 1;
+        const bHam = b.tip === "hammadde" ? 0 : 1;
+        if (aHam !== bHam) return aHam - bHam;
+        return String(a.urun_adi ?? "").localeCompare(String(b.urun_adi ?? ""), "tr");
+      });
   }, [arama, sadeceKritik, urunler]);
 
-
   const kritikSayi = useMemo(
-    () => urunler.filter((u) =>
-      u.kritik_seviye !== null && Number(u.stok) <= Number(u.kritik_seviye)
-    ).length,
+    () =>
+      urunler.filter(
+        (u) =>
+          u.tip === "hammadde" &&
+          u.kritik_seviye !== null &&
+          Number(u.stok) <= Number(u.kritik_seviye)
+      ).length,
     [urunler]
   );
 
@@ -73,6 +85,7 @@ export function StokTablosu() {
             <tr>
               <th className="border p-2 text-left">#</th>
               <th className="px-3 py-2 border text-left">Ürün</th>
+              <th className="border py-2 ">Tip</th>
               <th className="px-3 py-2 border text-right">Alış</th>
               <th className="px-3 py-2 border text-right">Satış</th>
               <th className="px-3 py-2 border text-center">Kritik</th>
@@ -80,18 +93,37 @@ export function StokTablosu() {
               <th className="px-3 py-2 border text-center">İşlem</th>
             </tr>
           </thead>
+
           <tbody>
             {filtreli.map((u) => {
-              const kritik = u.tip === 'hammadde'
-                && u.kritik_seviye !== null
-                && Number(u.stok) <= Number(u.kritik_seviye);
+              const stokTakip = u.tip === "hammadde";
+              const kritikMi = stokTakip &&
+                u.kritik_seviye !== null &&
+                Number(u.stok) <= Number(u.kritik_seviye);
+              const tukendi =
+                stokTakip &&
+                u.kritik_seviye !== null &&
+                Number(u.stok) <= 0;
+
               return (
                 <tr
-                  key={u.id}
-                  className={kritik ? "bg-red-50 dark:bg-red-900/20" : ""}
+                  key={String(u.id)}
+                  className={tukendi ? "bg-red-50" : kritikMi ? "bg-yellow-50" : ""}
                 >
                   <td className="px-3 py-2 border">{String(u.id)}</td>
                   <td className="px-3 py-2 border">{u.urun_adi}</td>
+                  <td className="border p-1 md:p-2 text-xs md:text-sm text-center">
+                    {u.tip === "hammadde" && (
+                      <span className="text-xs bg-gray-100 text-gray-700 px-2 py-0.5 rounded">
+                        Ham Madde
+                      </span>
+                    )}
+                    {u.tip === "satis_urunu" && (
+                      <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded">
+                        Satış Ürünü
+                      </span>
+                    )}
+                  </td>
                   <td className="px-3 py-2 border text-right">
                     {paraFormat(u.varsayilan_alis_fiyati)} ₺
                   </td>
@@ -99,12 +131,22 @@ export function StokTablosu() {
                     {paraFormat(u.varsayilan_satis_fiyati)} ₺
                   </td>
                   <td className="px-3 py-2 border text-center">
-                    {u.kritik_seviye ?? '—'}
+                    {String(u.kritik_seviye)}
                   </td>
                   <td className="px-3 py-2 border text-center font-semibold">
-                    {u.kritik_seviye === null ? '—' : u.stok}
-                    {kritik && (
-                      <span className="ml-2 text-xs text-red-600">kritik</span>
+                    {u.depolar && u.depolar.length > 0 ? (
+                      <div className="space-y-0.5">
+                        {u.depolar.map((d, i) => (
+                          <div key={i} className="text-xs wrap-break-word">
+                            <span className="text-gray-600">{d.depo}:</span>{" "}
+                            <span className="font-medium text-gray-900">
+                              {Number(d.stok ?? 0).toLocaleString("tr-TR")}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <span className="text-gray-400 text-xs">—</span>
                     )}
                   </td>
                   <td className="px-3 py-2 border text-center space-x-2 whitespace-nowrap">
@@ -126,7 +168,7 @@ export function StokTablosu() {
             })}
             {filtreli.length === 0 && (
               <tr>
-                <td colSpan={6} className="p-6 text-center text-gray-500">
+                <td colSpan={8} className="p-6 text-center text-gray-500">
                   Kayıt bulunamadı.
                 </td>
               </tr>
@@ -149,6 +191,7 @@ export function StokTablosu() {
       <StokHareketModal
         urun={hareketUrunu}
         isOpen={hareketUrunu !== null}
+        depolar={depolar}
         onClose={() => setHareketUrunu(null)}
         kaydedildi={() => {
           yukle();

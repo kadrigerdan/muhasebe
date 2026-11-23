@@ -98,65 +98,65 @@ export default function AlisIadeForm({ kaynakFaturaId, kalemler, varsayilanTarih
           {hata}
         </div>
       )}
-
-      <table className="w-full border-collapse border text-sm">
-        <thead className="bg-gray-100">
-          <tr>
-            <th className="border p-2 w-10"></th>
-            <th className="border p-2 text-left">Ürün</th>
-            <th className="border p-2 text-right">Orijinal</th>
-            <th className="border p-2 text-right">İade Edilen</th>
-            <th className="border p-2 text-right">Kalan</th>
-            <th className="border p-2 text-right">Birim Fiyat</th>
-            <th className="border p-2 text-right">İade Miktar</th>
-            <th className="border p-2 text-right">Satır Toplam</th>
-          </tr>
-        </thead>
-        <tbody>
-          {kalemler.map((k) => {
-            const s = secimler[k.urun_id] || { secili: false, miktar: 0 };
-            const satir = s.secili ? s.miktar * Number(k.birim_fiyat) : 0;
-            const kalan = Number(k.iade_edilebilir);
-            return (
-              <tr key={String(k.urun_id)} className={kalan <= 0 ? 'text-gray-400' : ''}>
-                <td className="border p-2 text-center">
-                  <input
-                    type="checkbox"
-                    checked={s.secili}
-                    disabled={kalan <= 0}
-                    onChange={() => toggle(k.urun_id)}
-                  />
-                </td>
-                <td className="border p-2">{k.urun_adi}</td>
-                <td className="border p-2 text-right">{String(k.orijinal_miktar)}</td>
-                <td className="border p-2 text-right">{String(k.iade_edilen)}</td>
-                <td className="border p-2 text-right font-medium">{String(kalan)}</td>
-                <td className="border p-2 text-right">{paraFormat(k.birim_fiyat)} ₺</td>
-                <td className="border p-2 text-right">
-                  <input
-                    type="number"
-                    min="0"
-                    max={kalan}
-                    step="0.01"
-                    value={s.miktar}
-                    disabled={!s.secili || kalan <= 0}
-                    onChange={(e) => setMiktar(k.urun_id, e.target.value)}
-                    className="border rounded px-2 py-1 w-24 text-right text-sm"
-                  />
-                </td>
-                <td className="border p-2 text-right">{paraFormat(satir)} ₺</td>
-              </tr>
-            );
-          })}
-        </tbody>
-        <tfoot>
-          <tr className="font-bold bg-gray-50">
-            <td colSpan={7} className="border p-2 text-right">İade Toplamı</td>
-            <td className="border p-2 text-right">{paraFormat(toplam)} ₺</td>
-          </tr>
-        </tfoot>
-      </table>
-
+      <div className='w-full overflow-x-auto'>
+        <table className="w-full border-collapse border text-sm">
+          <thead className="bg-gray-100">
+            <tr>
+              <th className="border p-2 w-10"></th>
+              <th className="border p-2 text-left">Ürün</th>
+              <th className="border p-2 text-right">Orijinal</th>
+              <th className="border p-2 text-right">İade Edilen</th>
+              <th className="border p-2 text-right">Kalan</th>
+              <th className="border p-2 text-right">Birim Fiyat</th>
+              <th className="border p-2 text-right">İade Miktar</th>
+              <th className="border p-2 text-right">Satır Toplam</th>
+            </tr>
+          </thead>
+          <tbody>
+            {kalemler.map((k) => {
+              const s = secimler[k.urun_id] || { secili: false, miktar: 0 };
+              const satir = s.secili ? s.miktar * Number(k.birim_fiyat) : 0;
+              const kalan = Number(k.iade_edilebilir);
+              return (
+                <tr key={String(k.urun_id)} className={kalan <= 0 ? 'text-gray-400' : ''}>
+                  <td className="border p-2 text-center">
+                    <input
+                      type="checkbox"
+                      checked={s.secili}
+                      disabled={kalan <= 0}
+                      onChange={() => toggle(k.urun_id)}
+                    />
+                  </td>
+                  <td className="border p-2">{k.urun_adi}</td>
+                  <td className="border p-2 text-right">{String(k.orijinal_miktar)}</td>
+                  <td className="border p-2 text-right">{String(k.iade_edilen)}</td>
+                  <td className="border p-2 text-right font-medium">{String(kalan)}</td>
+                  <td className="border p-2 text-right">{paraFormat(k.birim_fiyat)} ₺</td>
+                  <td className="border p-2 text-right">
+                    <input
+                      type="number"
+                      min="0"
+                      max={kalan}
+                      step="0.01"
+                      value={s.miktar}
+                      disabled={!s.secili || kalan <= 0}
+                      onChange={(e) => setMiktar(k.urun_id, e.target.value)}
+                      className="border rounded px-2 py-1 w-24 text-right text-sm"
+                    />
+                  </td>
+                  <td className="border p-2 text-right">{paraFormat(satir)} ₺</td>
+                </tr>
+              );
+            })}
+          </tbody>
+          <tfoot>
+            <tr className="font-bold bg-gray-50">
+              <td colSpan={7} className="border p-2 text-right">İade Toplamı</td>
+              <td className="border p-2 text-right">{paraFormat(toplam)} ₺</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
       <div className="flex gap-2">
         <button
           type="submit"

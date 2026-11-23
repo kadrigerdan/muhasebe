@@ -7,8 +7,7 @@ export const dynamic = 'force-dynamic';
 
 export default async function MutfakPage() {
   const [kalemler, ozet] = await Promise.all([
-    mutfakBekleyenler(),
-    adisyonOzet(),
+    mutfakBekleyenler(), adisyonOzet(),
   ]);
 
   const bekleyenler = kalemler.filter((k) => k.mutfak_durum === 'bekliyor');
@@ -63,7 +62,7 @@ export default async function MutfakPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-3 sm:gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4">
         <div className="border rounded-lg p-3 sm:p-4 bg-orange-50">
           <div className="text-xs text-orange-600 mb-1">Bekleyen</div>
           <div className="text-2xl sm:text-3xl font-bold text-orange-700">

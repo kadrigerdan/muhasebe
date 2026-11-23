@@ -8,8 +8,7 @@ export const dynamic = 'force-dynamic';
 
 export default async function RestoranPage() {
   const [masalar, ozet] = await Promise.all([
-    masaDurumlari(),
-    adisyonOzet(),
+    masaDurumlari(), adisyonOzet(),
   ]);
 
   return (

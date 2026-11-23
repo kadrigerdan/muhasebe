@@ -29,7 +29,7 @@ export default function AyarlarForm({ initial }) {
       )}
 
       {/* Şirket Bilgileri */}
-      <fieldset className="border rounded-lg p-4 space-y-4">
+      <fieldset className="border rounded-lg p-2 space-y-4">
         <legend className="font-bold px-2">Şirket Bilgileri</legend>
 
         <div>
@@ -54,7 +54,7 @@ export default function AyarlarForm({ initial }) {
           />
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className=" grid grid-cols-1 sm:grid-cols-2 gap-2">
           <div>
             <label className="block font-medium mb-1">Telefon</label>
             <input
@@ -75,11 +75,10 @@ export default function AyarlarForm({ initial }) {
               className="w-full border rounded px-3 py-2"
             />
           </div>
-        </div>
 
-        <div className="grid grid-cols-2 gap-4">
+
           <div>
-            <label className="block font-medium mb-1">Vergi No</label>
+            <label className="font-medium mb-1">Vergi No</label>
             <input
               type="text"
               name="vergi_no"
@@ -89,7 +88,7 @@ export default function AyarlarForm({ initial }) {
             />
           </div>
           <div>
-            <label className="block font-medium mb-1">Vergi Dairesi</label>
+            <label className=" font-medium mb-1">Vergi Dairesi</label>
             <input
               type="text"
               name="vergi_dairesi"

@@ -4,9 +4,15 @@ import { useRouter } from 'next/navigation';
 import { alisFaturaEkleAction } from '@/actions/alisFaturaActions';
 import AlisFaturaKalemEditor from './AlisFaturaKalemEditor';
 
-export default function AlisFaturaForm({ cariler, urunler, depolar, onSuccess }) {
+export default function AlisFaturaForm({ cariler = [], urunler = [], depolar = [], onSuccess }) {
   const router = useRouter();
   const [kalemler, setKalemler] = useState([]);
+
+  // Seçilen depo state'i burada tanımlı olmalıdır
+  const [secilenDepoId, setSecilenDepoId] = useState(
+    depolar?.[0]?.id ? String(depolar[0].id) : ''
+  );
+
   const [state, formAction, pending] = useActionState(alisFaturaEkleAction, null);
 
   useEffect(() => {
@@ -16,7 +22,6 @@ export default function AlisFaturaForm({ cariler, urunler, depolar, onSuccess })
     }
   }, [state, onSuccess, router]);
 
-  // Form submit öncesi validasyon + temizleme
   const onSubmit = (e) => {
     const gecerliKalemler = kalemler.filter(
       (k) => Number(k.urun_id) > 0 && Number(k.miktar) > 0
@@ -28,7 +33,6 @@ export default function AlisFaturaForm({ cariler, urunler, depolar, onSuccess })
       return;
     }
 
-    // Eksik satır varsa uyar (opsiyonel — boşları at, kalanı gönder)
     if (gecerliKalemler.length !== kalemler.length) {
       const onay = confirm(
         `${kalemler.length - gecerliKalemler.length} boş kalem atlanacak. Devam edilsin mi?`
@@ -39,14 +43,7 @@ export default function AlisFaturaForm({ cariler, urunler, depolar, onSuccess })
       }
     }
 
-    // Hidden input'u filtrelenmiş kalemlerle güncelle
     e.currentTarget.elements.kalemler.value = JSON.stringify(gecerliKalemler);
-  };
-
-  // Form submit sırasında değil, butona basıldığında test için:
-  const testSubmit = (e) => {
-    e.preventDefault();
-    const fd = new FormData(e.currentTarget);
   };
 
   return (
@@ -62,7 +59,7 @@ export default function AlisFaturaForm({ cariler, urunler, depolar, onSuccess })
         readOnly
       />
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <label className="block font-medium mb-1">Tedarikçi *</label>
           <select
@@ -89,14 +86,17 @@ export default function AlisFaturaForm({ cariler, urunler, depolar, onSuccess })
             className="w-full border rounded px-3 py-2"
           />
         </div>
+
         <div>
           <label className="block font-medium mb-1">Depo *</label>
           <select
             name="depo_id"
             required
-            defaultValue=""  // Kasap Deposu varsayılan
+            value={secilenDepoId}
+            onChange={(e) => setSecilenDepoId(e.target.value)}
             className="w-full border rounded px-3 py-2"
           >
+            <option value="">-- Depo Seç --</option>
             {depolar.map((d) => (
               <option key={d.id} value={d.id}>{d.ad}</option>
             ))}
@@ -104,7 +104,12 @@ export default function AlisFaturaForm({ cariler, urunler, depolar, onSuccess })
         </div>
       </div>
 
-      <AlisFaturaKalemEditor urunler={urunler} onChange={setKalemler} />
+      <AlisFaturaKalemEditor
+        urunler={urunler}
+        depoId={secilenDepoId}
+        onChange={setKalemler}
+        depolar={depolar}
+      />
 
       <button
         type="submit"

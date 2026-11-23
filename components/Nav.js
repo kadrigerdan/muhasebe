@@ -46,18 +46,37 @@ export default function Nav({ kullanici }) {
     kullanici?.rol === 'admin' ? adminLinkler : personelLinkler;
 
   return (
-    <nav className="sticky top-0 z-40 border-b bg-white/95 dark:bg-gray-900/95 backdrop-blur">
-      <div className="flex items-center justify-between p-1">
-        <div className="flex flex-wrap justify-center gap-3 flex-1">
-          {linkler.map((l) => {
+    <nav className="sticky top-0 z-40 border rounded-md mx-3 py-1 mt-4
+     bg-white/95 dark:bg-gray-900/95 backdrop-blur ">
+      <div className="flex flex-wrap justify-center md:gap-3 p-1">
+        {linkler.map((l) => {
+          const { icon, text } = ikonAyir(l.label);
+          const aktif =
+            l.href === '/' ? path === '/' : path.startsWith(l.href);
+          return (
+            <Link
+              key={l.href}
+              href={l.href}
+              className={`flex flex-col items-center gap-0.5 py-1.5 px-2 rounded text-xs leading-tight transition ${aktif ? 'bg-blue-600 text-white' : 'hover:bg-slate-200'
+                }`}
+            >
+              <span className="text-lg leading-none">{icon}</span>
+              <span>{text}</span>
+            </Link>
+          );
+        })}
+
+        {kullanici?.rol === 'admin' &&
+          yoneticiLinkleri.map((l) => {
             const { icon, text } = ikonAyir(l.label);
-            const aktif =
-              l.href === '/' ? path === '/' : path.startsWith(l.href);
+            const aktif = path.startsWith(l.href);
             return (
               <Link
                 key={l.href}
                 href={l.href}
-                className={`flex flex-col items-center gap-0.5 py-1.5 px-2 rounded text-xs leading-tight transition ${aktif ? 'bg-blue-600 text-white' : 'hover:bg-slate-200'
+                className={`flex flex-col items-center gap-0.5 py-1.5 px-2 rounded text-xs leading-tight transition ${aktif
+                  ? 'bg-purple-600 text-white'
+                  : 'hover:bg-purple-100 text-purple-700'
                   }`}
               >
                 <span className="text-lg leading-none">{icon}</span>
@@ -66,28 +85,10 @@ export default function Nav({ kullanici }) {
             );
           })}
 
-          {kullanici?.rol === 'admin' &&
-            yoneticiLinkleri.map((l) => {
-              const { icon, text } = ikonAyir(l.label);
-              const aktif = path.startsWith(l.href);
-              return (
-                <Link
-                  key={l.href}
-                  href={l.href}
-                  className={`flex flex-col items-center gap-0.5 py-1.5 px-2 rounded text-xs leading-tight transition ${aktif
-                    ? 'bg-purple-600 text-white'
-                    : 'hover:bg-purple-100 text-purple-700'
-                    }`}
-                >
-                  <span className="text-lg leading-none">{icon}</span>
-                  <span>{text}</span>
-                </Link>
-              );
-            })}
-        </div>
+
 
         {kullanici && (
-          <div className="flex items-center gap-2 ml-3 border-l pl-3">
+          <>
             <Link
               href="/profil"
               className="text-xs text-right leading-tight hidden sm:block hover:bg-gray-100 px-2 py-1 rounded"
@@ -107,7 +108,7 @@ export default function Nav({ kullanici }) {
                 🚪
               </button>
             </form>
-          </div>
+          </>
         )}
       </div>
     </nav>

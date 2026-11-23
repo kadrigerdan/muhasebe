@@ -23,7 +23,7 @@ export async function stokHareketleri(urunId) {
        FROM stok_hareketleri h
        JOIN urunler u ON u.id = h.urun_id
       WHERE h.urun_id = ?
-      ORDER BY h.tarih DESC h.id DESC
+      ORDER BY h.tarih DESC, h.id DESC
       LIMIT 100`,
         [urunId]
     );

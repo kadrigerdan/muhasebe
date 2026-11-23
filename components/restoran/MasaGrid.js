@@ -34,7 +34,7 @@ export default function MasaGrid({ masalar }) {
   }
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+    <div className="grid grid-cols-1 min-[750px]:grid-cols-2 gap-3">
       {masalar.map((m) => {
         const dolu = m.adisyon_id !== null;
 
@@ -51,11 +51,10 @@ export default function MasaGrid({ masalar }) {
             key={String(m.id)}
             onClick={() => masaTikla(m)}
             disabled={yukleniyor === m.id}
-            className={`relative border-2 rounded-lg p-6 text-left transition hover:shadow-lg disabled:opacity-50 min-h-35 ${
-              dolu
-                ? 'bg-red-50 border-red-400 hover:bg-red-100'
-                : 'bg-green-50 border-green-400 hover:bg-green-100'
-            }`}
+            className={`relative border-2 rounded-lg p-4 text-left transition hover:shadow-lg disabled:opacity-50 min-h-8 sm:min-h-20  ${dolu
+              ? 'bg-red-50 border-red-400 hover:bg-red-100'
+              : 'bg-green-50 border-green-400 hover:bg-green-100'
+              }`}
           >
             <div className="text-xl font-bold mb-3 flex items-center justify-between">
               <span>{m.ad}</span>

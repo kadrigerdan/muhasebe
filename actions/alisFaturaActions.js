@@ -40,15 +40,12 @@ export async function alisFaturaEkleAction(prevState, formData) {
             return { error: `${i + 1}. kalemde fiyat geçersiz.` };
         }
 
-        normalizedKalemler.push({ urun_id, miktar, birim_fiyat });   // ← PUSH AYNI İSME
+        normalizedKalemler.push({ urun_id, miktar, birim_fiyat });
     }
 
     try {
         await alisFaturaOlustur({
-            cari_id,
-            tarih,
-            depo_id,
-            kalemler: normalizedKalemler,                  // ← AYNI İSİM
+            cari_id, tarih, depo_id, kalemler: normalizedKalemler,
         });
         revalidatePath('/alis-faturalar');
         revalidatePath('/urunler');

@@ -3,9 +3,7 @@
 import { useState, useTransition } from 'react';
 
 export default function ExcelIndirButton({
-  action,
-  children = '📊 Excel',
-  className = '',
+  action, children = '📊 Excel', className = '',
 }) {
   const [pending, startTransition] = useTransition();
   const [hata, setHata] = useState(null);
@@ -48,7 +46,7 @@ export default function ExcelIndirButton({
         disabled={pending}
         className={
           className ||
-          'bg-green-600 text-white px-3 py-2 rounded hover:bg-green-700 disabled:opacity-50 text-sm'
+          'bg-green-600 text-white px-1 py-2 rounded hover:bg-green-700 disabled:opacity-50 text-sm'
         }
       >
         {pending ? 'Hazırlanıyor...' : children}

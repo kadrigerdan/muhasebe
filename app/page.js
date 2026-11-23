@@ -45,9 +45,9 @@ export default async function AnaSayfa() {
 
 
   return (
-    <div className="p-6 max-w-7xl mx-auto space-y-2">
-      <h1 className="text-3xl font-bold ml-10">Muhasebe Paneli </h1>
-      <div className='grid grid-cols-2 md:grid-cols-1'>
+    <div className="p-2 mx-2 space-y-2">
+      <h1 className="text-3xl font-bold ">Muhasebe Paneli </h1>
+      <div className='grid grid-cols-1 sm:grid-cols-2'>
         <div>
           {/* KRİTİK STOK ŞERİDİ */}
           {bildirimData.kritikStok?.length > 0 && (
@@ -84,26 +84,26 @@ export default async function AnaSayfa() {
       </div>
       {/* KASA DURUMU */}
       <div>
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-gray-900">
-          <Link href="/kasa" className="border rounded-lg p-4 bg-white hover:shadow-md transition">
-            <div className="text-xs mb-1">Nakit (Fiziksel)</div>
+        <div className="grid grid-cols-1 min-[800px]:grid-cols-2 min-[1200px]:grid-cols-5 gap-2 text-gray-900">
+          <Link href="/kasa" className="border rounded-lg p-4 bg-white hover:shadow-md transition ">
+            <div className="text-xl">Nakit  </div>
             <div className="text-2xl font-bold text-green-700">
               {paraFormat(kasaTip.nakit)} ₺
             </div>
           </Link>
-          <Link href="/kasa" className="border rounded-lg p-4 bg-white hover:shadow-md transition">
+          <Link href="/kasa" className="border rounded-lg p-4 bg-white hover:shadow-md transition px-4 md:p-4">
             <div className="text-xs mb-1">Banka</div>
             <div className="text-2xl font-bold text-blue-700">
               {paraFormat(kasaTip.banka)} ₺
             </div>
           </Link>
-          <Link href="/kasa" className="border rounded-lg p-4 bg-white hover:shadow-md transition">
+          <Link href="/kasa" className="border rounded-lg p-4 bg-white hover:shadow-md transition px-4 md:p-4">
             <div className="text-xs mb-1">POS</div>
             <div className="text-2xl font-bold text-purple-700">
               {paraFormat(kasaTip.pos)} ₺
             </div>
           </Link>
-          <Link href="/kasa" className="border rounded-lg p-4 bg-gray-100 hover:shadow-md transition">
+          <Link href="/kasa" className="border rounded-lg  bg-gray-100 hover:shadow-md transition px-4 md:p-4">
             <div className="text-xs mb-1">Toplam Likidite</div>
             <div className="text-2xl font-bold">
               {paraFormat(kasaGenel.toplam_bakiye)} ₺
@@ -113,55 +113,46 @@ export default async function AnaSayfa() {
             </div>
           </Link>
 
-          <Link href="/stok" className="border rounded-lg p-4 bg-white hover:shadow-md transition">
+          <Link href="/stok" className="border rounded-lg p-4 bg-white hover:shadow-md transition px-4 md:p-4">
             <div className="text-xs mb-1">Stok Değeri</div>
             <div className="text-2xl font-bold">
               {paraFormat(stokDeger.deger)} ₺
             </div>
           </Link>
-        </div>
-
-      </div>
 
 
 
-      {/* ANA KARTLAR */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-gray-900">
-
-        <Link href="/alis-faturalar" className="border rounded-lg p-4 bg-white hover:shadow-md transition">
-          <div className="text-xs mb-1">Toplam Alış</div>
-          <div className="text-2xl font-bold text-orange-700">
-            {paraFormat(alisToplam)} ₺
+          <Link href="/alis-faturalar" className="border rounded-lg p-4 bg-white hover:shadow-md transition">
+            <div className="text-xs mb-1">Toplam Alış</div>
+            <div className="text-2xl font-bold text-orange-700">
+              {paraFormat(alisToplam)} ₺
+            </div>
+          </Link>
+          <Link href="/satis-faturalar" className="border rounded-lg p-4 bg-white hover:shadow-md transition">
+            <div className="text-xs text-gray-900 mb-1">Toplam Satış</div>
+            <div className="text-2xl font-bold text-green-900">
+              {paraFormat(satisToplam)} ₺
+            </div>
+          </Link>
+          <div className={`border rounded-lg p-4 ${kar >= 0 ? 'bg-green-50' : 'bg-red-50'}`}>
+            <div className="text-xs text-gray-900 mb-1">Brüt Kâr</div>
+            <div className={`text-2xl font-bold ${kar >= 0 ? 'text-green-700' : 'text-red-900'}`}>
+              {paraFormat(kar)} ₺
+            </div>
           </div>
-        </Link>
-        <Link href="/satis-faturalar" className="border rounded-lg p-4 bg-white hover:shadow-md transition">
-          <div className="text-xs text-gray-900 mb-1">Toplam Satış</div>
-          <div className="text-2xl font-bold text-green-900">
-            {paraFormat(satisToplam)} ₺
-          </div>
-        </Link>
-        <div className={`border rounded-lg p-4 ${kar >= 0 ? 'bg-green-50' : 'bg-red-50'}`}>
-          <div className="text-xs text-gray-900 mb-1">Brüt Kâr</div>
-          <div className={`text-2xl font-bold ${kar >= 0 ? 'text-green-700' : 'text-red-900'}`}>
-            {paraFormat(kar)} ₺
-          </div>
-        </div>
 
 
-        <Link href="/cariler" className="border rounded-lg p-4 bg-white hover:shadow-md transition">
-          <div className="text-xs text-gray-900 mb-1">Aktif Cari</div>
-          <div className="text-2xl font-bold">{sayiFormat(cariSayi.toplam)}</div>
-        </Link>
-        <Link href="/urunler" className="border rounded-lg p-4 bg-white hover:shadow-md transition">
-          <div className="text-xs text-gray-900 mb-1">Aktif Ürün</div>
-          <div className="text-2xl font-bold">{sayiFormat(urunSayi.toplam)}</div>
-        </Link>
+          <Link href="/cariler" className="border rounded-lg p-4 bg-white hover:shadow-md transition">
+            <div className="text-xs text-gray-900 mb-1">Aktif Cari</div>
+            <div className="text-2xl font-bold">{sayiFormat(cariSayi.toplam)}</div>
+          </Link>
+          <Link href="/urunler" className="border rounded-lg p-4 bg-white hover:shadow-md transition">
+            <div className="text-xs text-gray-900 mb-1">Aktif Ürün</div>
+            <div className="text-2xl font-bold">{sayiFormat(urunSayi.toplam)}</div>
+          </Link>
 
-      </div>
 
-      {/* RESTORAN DURUMU */}
-      <div>
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+
           <Link href="/restoran" className="border rounded-lg p-4 bg-white hover:shadow-md transition">
             <div className="text-xs text-gray-900 mb-1">Açık Adisyon</div>
             <div className="text-2xl font-bold text-red-700">
@@ -191,10 +182,6 @@ export default async function AnaSayfa() {
             <div className="text-2xl font-bold">{sayiFormat(personelSayi.toplam)}</div>
           </Link>
         </div>
-      </div>
-
-      {/* UYARILAR + ALIŞ/SATIŞ/KÂR — Tek Sıra */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
       </div>
 
       {/* HIZLI ERİŞİM */}

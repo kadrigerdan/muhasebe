@@ -92,7 +92,10 @@ export default function SiparisListesi({ adisyon, kasaHesaplari }) {
     startGonder(async () => {
       const res = await mutfagaGonderAction(adisyon.id);
       if (res?.error) setHata(res.error);
-      else setBasari(`✓ ${res.gonderilen} ürün mutfağa gönderildi`);
+      else {
+        setBasari(`✓ ${res.gonderilen} ürün mutfağa gönderildi`);
+        router.refresh();
+      }
     });
   }
 

@@ -8,7 +8,7 @@ export default async function AyarlarPage() {
   const ayarlar = await ayarlariGetir();
 
   return (
-    <div className="p-6 max-w-3xl mx-auto space-y-6">
+    <div className=" min-w-0 mx-2 space-y-4">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">⚙️ Ayarlar</h1>
         <Link href="/" className="text-blue-600 hover:underline">

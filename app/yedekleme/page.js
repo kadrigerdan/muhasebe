@@ -17,7 +17,7 @@ export default async function YedeklemePage() {
   const yedekler = await yedekListesiAction();
 
   return (
-    <div className="p-6 max-w-4xl mx-auto space-y-6">
+    <div className="p-2 max-w-4xl mx-auto space-y-6">
       <div>
         <h1 className="text-2xl font-bold">Yedekleme</h1>
         <p className="text-sm text-gray-500 mt-1">
@@ -26,43 +26,44 @@ export default async function YedeklemePage() {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="w-full flex flex-wrap gap-4 justify-around">
         <TamYedekAlButton />
         <YedekAlButton />
       </div>
 
-      <table className="w-full border-collapse border text-sm">
-        <thead className="bg-gray-100">
-          <tr>
-            <th className="border p-2 text-left">Dosya</th>
-            <th className="border p-2 text-left">Tarih</th>
-            <th className="border p-2 text-right">Boyut</th>
-            <th className="border p-2 text-center">İşlem</th>
-          </tr>
-        </thead>
-        <tbody>
-          {yedekler.length === 0 && (
+      <div className='min-w-0 overflow-x-auto'>
+        <table className="w-full border-collapse border text-sm">
+          <thead className="bg-gray-100">
             <tr>
-              <td colSpan={4} className="border p-6 text-center text-gray-500">
-                Henüz yedek yok.
-              </td>
+              <th className="border p-2 text-left">Dosya</th>
+              <th className="border p-2 text-left">Tarih</th>
+              <th className="border p-2 text-center">İşlem</th>
             </tr>
-          )}
-          {yedekler.map((y) => (
-            <tr key={y.ad}>
-              <td className="border p-2 font-mono text-xs">{y.ad}</td>
-              <td className="border p-2">
-                {new Date(y.tarih).toLocaleString('tr-TR')}
-              </td>
-              <td className="border p-2 text-center space-x-3">
-                <YedekIndirButton dosya={y.ad} />
-                <YedekGeriYukleButton dosya={y.ad} />
-                <YedekSilButton dosya={y.ad} />
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {yedekler.length === 0 && (
+              <tr>
+                <td colSpan={4} className="border p-6 text-center text-gray-500">
+                  Henüz yedek yok.
+                </td>
+              </tr>
+            )}
+            {yedekler.map((y) => (
+              <tr key={y.ad}>
+                <td className="border p-2 font-mono text-xs">{y.ad}</td>
+                <td className="border p-2">
+                  {new Date(y.tarih).toLocaleString('tr-TR')}
+                </td>
+                <td className="border p-2 text-center space-x-3">
+                  <YedekIndirButton dosya={y.ad} />
+                  <YedekGeriYukleButton dosya={y.ad} />
+                  <YedekSilButton dosya={y.ad} />
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
 
       <div className="border rounded p-4 bg-yellow-50 text-yellow-800 text-sm">
         <div className="font-semibold mb-1">⚠️ Önemli</div>

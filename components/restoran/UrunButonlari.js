@@ -26,7 +26,7 @@ export default function UrunButonlari({ adisyonId, urunler }) {
   }
 
   return (
-    <div className="space-y-3">
+    <div className="w-full min-w-0 space-y-2">
       <h3 className="font-semibold">Ürün Ekle</h3>
 
       {hata && (
@@ -35,17 +35,16 @@ export default function UrunButonlari({ adisyonId, urunler }) {
         </div>
       )}
 
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+      <div className="grid grid-cols-1 min-[450px]:grid-cols-2 min-[750px]:grid-cols-4 lg:grid-cols-5 gap-2">
         {urunler.map((u) => (
           <button
             key={String(u.id)}
             onClick={() => urunEkle(u)}
             disabled={pending}
-            className={`border-2 rounded-lg p-4 text-left transition active:scale-95 disabled:opacity-50 ${
-              eklenenId === u.id
-                ? 'bg-green-200 border-green-500'
-                : 'bg-white border-gray-300 hover:border-blue-400 hover:bg-blue-50'
-            }`}
+            className={`border-2 rounded-lg p-4 text-left transition active:scale-95 disabled:opacity-50 ${eklenenId === u.id
+              ? 'bg-green-200 border-green-500'
+              : 'bg-white border-gray-300 hover:border-blue-400 hover:bg-blue-50'
+              }`}
           >
             <div className="font-bold text-sm mb-1">{u.urun_adi}</div>
             <div className="text-lg font-bold text-blue-700">
