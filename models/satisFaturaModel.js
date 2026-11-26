@@ -177,26 +177,41 @@ export async function satisFaturaOlustur({ cari_id, tarih, depo_id, kalemler }) 
     }
 }
 
-export async function satisMaliOzet({ gorunum = 'aktif' } = {}) {
-    const where =
-        gorunum === 'arsiv' ? 'WHERE COALESCE(f.arsivlendi, 0) = 1'
-            : gorunum === 'iade' ? "WHERE f.fatura_tipi = 'iade' AND COALESCE(f.arsivlendi, 0) = 0"
-                : gorunum === 'aktif' ? `WHERE f.fatura_tipi = 'normal' AND COALESCE(f.arsivlendi, 0) = 0
-            AND (
-              SELECT COALESCE(SUM(iad.miktar), 0)
-                FROM alis_fatura_detaylari iad
-                JOIN alis_faturalar iadf ON iadf.id = iad.fatura_id
+export async function satisMaliOzet({ gorunum = 'aktif', depoId = null } = {}) {
+    const kosullar = [];
+    const params = [];
+
+    if (gorunum === 'arsiv') {
+        kosullar.push('COALESCE(f.arsivlendi, 0) = 1');
+    } else if (gorunum === 'iade') {
+        kosullar.push("f.fatura_tipi = 'iade' AND COALESCE(f.arsivlendi, 0) = 0");
+    } else if (gorunum === 'aktif') {
+        kosullar.push(`f.fatura_tipi = 'normal' AND COALESCE(f.arsivlendi, 0) = 0`);
+        kosullar.push(`
+            (
+              SELECT COALESCE(SUM(iad.adet), 0)
+                FROM satis_fatura_detaylari iad
+                JOIN satis_faturalar iadf ON iadf.id = iad.fatura_id
                WHERE iadf.kaynak_fatura_id = f.id
                  AND iadf.fatura_tipi = 'iade'
                  AND COALESCE(iadf.arsivlendi, 0) = 0
             ) < (
-              SELECT COALESCE(SUM(d2.miktar), 0)
-                FROM alis_fatura_detaylari d2
+              SELECT COALESCE(SUM(d2.adet), 0)
+                FROM satis_fatura_detaylari d2
                WHERE d2.fatura_id = f.id
-            ) - 0.01`
-                    : '';
-    const rows = await query(`  
-        SELECT
+            ) - 0.01
+        `);
+    }
+
+    if (depoId !== null && depoId !== undefined && depoId !== '' && depoId !== 'hepsi') {
+        kosullar.push('f.depo_id = ?');
+        params.push(Number(depoId));
+    }
+
+    const where = kosullar.length ? `WHERE ${kosullar.join(' AND ')}` : '';
+
+    const rows = await query(
+        `SELECT
             COUNT(DISTINCT CASE WHEN f.fatura_tipi = 'normal' THEN f.id END) AS fatura_sayisi,
             COALESCE(SUM(CASE WHEN f.fatura_tipi = 'iade'
                               THEN -(d.adet * d.birim_fiyat)
@@ -206,8 +221,10 @@ export async function satisMaliOzet({ gorunum = 'aktif' } = {}) {
                               ELSE d.adet END), 0) AS toplam_adet
           FROM satis_faturalar f
           LEFT JOIN satis_fatura_detaylari d ON d.fatura_id = f.id
-          ${where}
-    `);
+          ${where}`,
+        params
+    );
+
     return rows[0] ?? { fatura_sayisi: 0, toplam_tutar: 0, toplam_adet: 0 };
 }
 

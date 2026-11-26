@@ -1,4 +1,3 @@
-// app/satis-faturalar/page.js
 import Link from 'next/link';
 import { tumSatisFaturalar, satisMaliOzet } from '@/models/satisFaturaModel';
 import SatisFaturaList from '@/components/satis-fatura/SatisFaturaList';
@@ -20,75 +19,73 @@ export default async function SatisFaturaListPage({ searchParams }) {
   return (
     <div className="w-full min-w-0 p-2">
       {/* Başlık */}
-      <h1 className="text-2xl font-bold mb-3">Satış Faturaları</h1>
+      <div className='flex justify-around my-4'>
+        <h1 className="text-2xl font-bold mb-3">Satış Faturaları</h1>
+        <Link
+          href="/satis-faturalar/yeni"
+          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 whitespace-nowrap text-center"
+        >
+          + Yeni Satış Faturası
+        </Link>
+      </div>
 
-      {/* Sekmeler + Excel/Yeni */}
-      <div className="flex items-center justify-between gap-4 flex-wrap">
-        <div className="w-full gap-2 grid grid-cols-3">
-          <Link
-            href="/satis-faturalar?gorunum=aktif"
-            className={
-              gorunum === 'aktif'
-                ? 'bg-blue-600 text-white px-3 py-1.5 rounded text-sm text-center'
-                : 'border px-3 py-1.5 rounded text-sm hover:bg-slate-50 text-center'
-            }
-          >
-            Aktif
-          </Link>
-          <Link
-            href="/satis-faturalar?gorunum=arsiv"
-            className={
-              gorunum === 'arsiv'
-                ? 'bg-amber-600 text-white px-3 py-1.5 rounded text-sm text-center'
-                : 'border px-3 py-1.5 rounded text-sm hover:bg-slate-50 text-center'
-            }
-          >
-            🗄️ Arşiv
-          </Link>
-          <Link
-            href="/satis-faturalar?gorunum=tumu"
-            className={
-              gorunum === 'tumu'
-                ? 'bg-slate-600 text-white px-3 py-1.5 rounded text-sm text-center'
-                : 'border px-3 py-1.5 rounded text-sm hover:bg-slate-50 text-center'
-            }
-          >
-            Tümü
-          </Link>
-        </div>
+      {/* Butonlar */}
+      <div className="w-full gap-2 grid grid-cols-2 sm:grid-cols-6">
+        <Link
+          href="/satis-faturalar?gorunum=aktif"
+          className={
+            gorunum === 'aktif'
+              ? 'bg-blue-600 text-white px-3 py-1.5 rounded text-sm text-center'
+              : 'border px-3 py-1.5 rounded text-sm hover:bg-slate-50 text-center'
+          }
+        >
+          Aktif
+        </Link>
+        <Link
+          href="/satis-faturalar?gorunum=arsiv"
+          className={
+            gorunum === 'arsiv'
+              ? 'bg-amber-600 text-white px-3 py-1.5 rounded text-sm text-center'
+              : 'border px-3 py-1.5 rounded text-sm hover:bg-slate-50 text-center'
+          }
+        >
+          🗄️ Arşiv
+        </Link>
+        <Link
+          href="/satis-faturalar?gorunum=tumu"
+          className={
+            gorunum === 'tumu'
+              ? 'bg-slate-600 text-white px-3 py-1.5 rounded text-sm text-center'
+              : 'border px-3 py-1.5 rounded text-sm hover:bg-slate-50 text-center'
+          }
+        >
+          Tümü
+        </Link>
 
-        <div className="w-full gap-2 grid grid-cols-2 sm:grid-cols-4">
-          <Link
-            href="/satis-faturalar?gorunum=iade"
-            className={
-              gorunum === 'iade'
-                ? 'bg-purple-600 text-white px-3 py-1.5 rounded text-sm text-center'
-                : 'border px-3 py-1.5 rounded text-sm hover:bg-slate-50 text-center'
-            }
-          >
-            ↩️ İade
-          </Link>
-          <Link
-            href="/satis-faturalar?gorunum=iade_kesilmis"
-            className={
-              gorunum === 'iade_kesilmis'
-                ? 'bg-indigo-600 text-white px-3 py-1.5 rounded text-sm text-center'
-                : 'border px-3 py-1.5 rounded text-sm hover:bg-slate-50 text-center'
-            }
-          >
-            ↩️ İade Kesilmiş
-          </Link>
+        <Link
+          href="/satis-faturalar?gorunum=iade"
+          className={
+            gorunum === 'iade'
+              ? 'bg-purple-600 text-white px-3 py-1.5 rounded text-sm text-center'
+              : 'border px-3 py-1.5 rounded text-sm hover:bg-slate-50 text-center'
+          }
+        >
+          ↩️ İade
+        </Link>
+        <Link
+          href="/satis-faturalar?gorunum=iade_kesilmis"
+          className={
+            gorunum === 'iade_kesilmis'
+              ? 'bg-indigo-600 text-white px-3 py-1.5 rounded text-sm text-center'
+              : 'border px-3 py-1.5 rounded text-sm hover:bg-slate-50 text-center'
+          }
+        >
+          ↩️ İade Kesilmiş
+        </Link>
 
-          <ExcelIndirButton action={satisFaturalariExcelAction}>
-            📊 Excel İndir
-          </ExcelIndirButton>
-          <Link
-            href="/satis-faturalar/yeni"
-            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 whitespace-nowrap text-center"
-          >
-            + Yeni Satış Faturası
-          </Link>
-        </div>
+        <ExcelIndirButton action={satisFaturalariExcelAction}>
+          📊 Excel İndir
+        </ExcelIndirButton>
       </div>
 
       {/* Özet kartları */}

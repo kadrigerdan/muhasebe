@@ -30,8 +30,11 @@ export default async function SiparisSayfasi({ params }) {
 
   const [urunler, kasaHesaplari] = await Promise.all([
     query(
-      `SELECT id, urun_adi, varsayilan_satis_fiyati
-         FROM urunler
+      `SELECT u.id, u.urun_adi, u.varsayilan_satis_fiyati,
+      COALESCE(us.stok, 0) AS restoran_stok
+         FROM urunler u
+         LEFT JOIN depolar d ON LOWER(d.ad) LIKE '%restoran%'
+         LEFT JOIN urun_stok us ON us.urun_id = u.id AND us.depo_id = d.id
         WHERE durum = 1 AND tip = 'satis_urunu'
         ORDER BY urun_adi`
     ),

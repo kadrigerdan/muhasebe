@@ -158,18 +158,42 @@ export async function adisyonKapat(adisyonId, kasaId, odemeYontemi) {
         );
         if (!kalemler.length) throw new Error('Boş adisyon kapatılamaz.');
 
+        const depoRows = await conn.query(
+            "SELECT id FROM depolar WHERE LOWER(ad) = 'restoran deposu' LIMIT 1"
+        );
+        const restoranDepoId = depoRows[0]?.id ?? null;
+        if (!restoranDepoId) {
+            throw new Error('Restoran Deposu bulunamadı.');
+        }
+
         // Stok düş
         for (const k of kalemler) {
+            const miktar = Number(k.adet ?? 0);
+            const aciklama = `Masa satışı #${adisyonId}`;
+
             await conn.query(
                 `INSERT INTO stok_hareketleri
-           (urun_id, tip, miktar, aciklama, kaynak, kaynak_id, tarih)
-         VALUES (?, 'cikis', ?, ?, 'satis_fatura', ?, CURDATE())`,
-                [k.urun_id, k.adet, `Masa satışı #${adisyonId}`, adisyonId]
+           (urun_id, depo_id, tip, miktar, aciklama, kaynak, kaynak_id, tarih)
+         VALUES (?, ?, 'cikis', ?, ?, 'satis_fatura', ?, CURDATE())`,
+                [k.urun_id, restoranDepoId, miktar, aciklama, adisyonId]
             );
+
+            const sonuc = await conn.query(
+                `UPDATE urun_stok
+                    SET stok = stok - ?
+                  WHERE urun_id = ? AND depo_id = ?`,
+                [miktar, k.urun_id, restoranDepoId]
+            );
+
+            if (!sonuc.affectedRows) {
+                throw new Error(
+                    `Stok düşülemedi: urun_id=${k.urun_id}, depo_id=${restoranDepoId}, miktar=${miktar}`
+                );
+            }
 
             await conn.query(
                 'UPDATE urunler SET stok = stok - ? WHERE id = ?',
-                [k.adet, k.urun_id]
+                [miktar, k.urun_id]
             );
         }
 

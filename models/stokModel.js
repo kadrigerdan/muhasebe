@@ -28,3 +28,45 @@ export async function stokHareketleri(urunId) {
         [urunId]
     );
 }
+
+export async function stokListesiGetir() {
+    const rows = await query(`
+        SELECT u.*,
+        COALESCE(SUM(us.stok),0) AS toplam_stok,
+        COALESCE(
+          JSON_ARRAYAGG(
+            CASE
+              WHEN us.depo_id IS NOT NULL THEN JSON_OBJECT(
+              'depo_id', d.id,
+              'depo_ad',d.ad,
+              'stok',us.stok
+              )
+            END
+        ),
+         JSON_ARRAY()
+    )    AS depo_stoklari
+    FROM urunler u
+    LEFT JOIN urun_stok us ON us.urun_id = u.id
+    LEFTJOIN depolar d ON d.id = us.depo_id
+    GROUP BY u.id
+    ORDER BY u.id    
+        `);
+
+    return rows.map((u) => {
+        const hamListe = Array.isArray(u.depo_stoklari)
+            ? u.depo_stoklari
+            : JSON.parse(u.depo_stoklari || '[]')
+
+        const depoStoklari = hamListe.filter(Boolean);
+        const toplamStok = depoStoklari.reduce(
+            (acc, item) => acc + Number(item.stok ?? 0),
+            0
+        );
+
+        return {
+            ...u,
+            depo_stoklari: depoStoklari,
+            toplam_stok: toplamStok
+        };
+    });
+}
